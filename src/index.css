@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  height: 100%;
+  color: #1d140f;
+  background:
+    radial-gradient(circle at top, rgba(255, 186, 107, 0.48), transparent 34%),
+    linear-gradient(180deg, #fff7ec 0%, #fffaf4 40%, #fff 100%);
+  font-family:
+    Inter, "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+.map-panel--vietnam {
+  background: linear-gradient(180deg, #a8cff6 0%, #92c1f2 100%);
+}
+
+.vietnam-map text {
+  font-family:
+    Inter, "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+
+@keyframes slow-zoom {
+  0% { transform: scale(1.05); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1.05); }
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 20s infinite ease-in-out;
+}
