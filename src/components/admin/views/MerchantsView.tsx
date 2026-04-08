@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Search, Filter, Plus, MoreHorizontal, Star, MapPin } from "lucide-react";
+import AddMerchantModal from "../modals/AddMerchantModal";
 
-const merchants = [
+const initialMerchants = [
   { id: "M001", name: "Pizza 4P's", logo: "🍕", category: "Italian", location: "District 1", status: "Active", rating: 4.8, orders: 1240 },
   { id: "M002", name: "Banh Mi Huynh Hoa", logo: "🥖", category: "Vietnamese", location: "District 1", status: "Active", rating: 4.9, orders: 5402 },
   { id: "M003", name: "Maison Marou", logo: "🍫", category: "Dessert", location: "District 3", status: "Pending", rating: 4.7, orders: 0 },
@@ -10,6 +12,13 @@ const merchants = [
 ];
 
 function MerchantsView() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [merchantsList, setMerchantsList] = useState(initialMerchants);
+
+  const handleAddMerchant = (newMerchant: any) => {
+    setMerchantsList([newMerchant, ...merchantsList]);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between mb-2">
@@ -17,7 +26,10 @@ function MerchantsView() {
           <h1 className="text-xl font-bold text-stone-950">Merchants Management</h1>
           <p className="text-sm text-stone-500 mt-1">Manage and monitor all restaurant partners across the platform.</p>
         </div>
-        <button className="flex items-center gap-2 bg-stone-950 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all shadow-lg active:scale-95">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-stone-950 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all shadow-lg active:scale-95"
+        >
           <Plus className="w-4 h-4" />
           Add Merchant
         </button>
@@ -62,7 +74,7 @@ function MerchantsView() {
             </tr>
           </thead>
           <tbody>
-            {merchants.map((merchant) => (
+            {merchantsList.map((merchant) => (
               <tr key={merchant.id} className="border-b border-stone-50 hover:bg-stone-50/50 transition-colors group cursor-pointer">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
@@ -116,7 +128,7 @@ function MerchantsView() {
           </tbody>
         </table>
         <div className="bg-stone-50/50 px-6 py-4 flex items-center justify-between border-t border-stone-100">
-          <span className="text-[0.75rem] font-bold text-stone-400 uppercase tracking-widest">Showing 6 of 842 merchants</span>
+          <span className="text-[0.75rem] font-bold text-stone-400 uppercase tracking-widest">Showing {merchantsList.length} of {842 + (merchantsList.length - initialMerchants.length)} merchants</span>
           <div className="flex items-center gap-2">
              <button className="h-9 w-9 flex items-center justify-center border border-stone-200 rounded-lg bg-white text-stone-400 hover:text-stone-900 transition-all shadow-sm active:scale-90">
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg>
@@ -134,8 +146,14 @@ function MerchantsView() {
           </div>
         </div>
       </div>
+
+      {/* Add Merchant Modal */}
+      <AddMerchantModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAdd={handleAddMerchant}
+      />
     </div>
   );
 }
-
 export default MerchantsView;

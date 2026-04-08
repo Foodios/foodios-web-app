@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/logo-transparent-logo.png";
 import { Menu } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 type HeaderProps = {
   isHeroActive: boolean;
@@ -8,12 +9,13 @@ type HeaderProps = {
 };
 
 function Header({ isHeroActive, onMenuClick }: HeaderProps) {
+  const { user } = useAuth();
+  
   const shellClass = isHeroActive
     ? "bg-transparent text-white"
     : "bg-white/92 text-stone-950 shadow-[0_10px_30px_rgba(0,0,0,0.08)]";
   
   const iconColor = isHeroActive ? "text-stone-900" : "text-stone-950";
-  const actionTextClass = isHeroActive ? "text-white" : "text-stone-900";
   
   const ghostButtonClass = isHeroActive
     ? "border-white/20 bg-white/75 text-stone-900"
@@ -38,20 +40,19 @@ function Header({ isHeroActive, onMenuClick }: HeaderProps) {
         </div>
 
         <nav className="flex items-center gap-3 max-[820px]:flex-wrap max-[820px]:justify-end" aria-label="Primary">
-          <a className={`inline-flex items-center gap-1 text-sm font-semibold transition-colors duration-300 ${actionTextClass} max-[640px]:hidden`} href="#locations">
-            Get a ride
-            <span aria-hidden="true">↗</span>
-          </a>
-          <Link className={`inline-flex min-w-[84px] items-center justify-center rounded-full px-5 py-[11px] text-sm font-bold shadow-sm transition-transform duration-200 hover:-translate-y-0.5 ${ghostButtonClass}`} to="/login">
-            Log in
-          </Link>
-          <Link className="inline-flex min-w-[84px] items-center justify-center rounded-full bg-stone-950 px-5 py-[11px] text-sm font-bold text-white shadow-lg transition-transform duration-200 hover:-translate-y-0.5" to="/register">
-            Sign up
-          </Link>
+          {!user && (
+            <>
+              <Link className={`inline-flex min-w-[84px] items-center justify-center rounded-full px-5 py-[11px] text-sm font-bold shadow-sm transition-transform duration-200 hover:-translate-y-0.5 ${ghostButtonClass}`} to="/login">
+                Log in
+              </Link>
+              <Link className="inline-flex min-w-[84px] items-center justify-center rounded-full bg-stone-950 px-5 py-[11px] text-sm font-bold text-white shadow-lg transition-transform duration-200 hover:-translate-y-0.5" to="/register">
+                Sign up
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
   );
 }
-
 export default Header;

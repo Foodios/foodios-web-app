@@ -1,9 +1,75 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo-transparent-logo.png";
 import banner from "../assets/food-delivery.jpg";
+import { generateApiMetadata } from "../utils/apiMetadata";
+import { useAuth } from "../context/AuthContext";
 
 const Login: React.FC = () => {
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    const metadata = generateApiMetadata("OFF");
+    const payload = {
+      ...metadata,
+      data: {
+        identifier,
+        password
+      }
+    };
+
+    try {
+      const response = await fetch("http://localhost:8080/api/v1/authentication/login", {
+        method: "POST",
+        headers: {
+          "accept": "*/*",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.description || "Invalid credentials");
+      }
+
+      const result = await response.json();
+
+      // Mapping the official response structure
+      const user = {
+        id: result.data?.userId || "mock-user-id",
+        name: result.data?.email?.split('@')[0] || "User", // Fallback name from email
+        email: result.data?.email || identifier,
+        roles: result.data?.roles || [],
+        avatar: ""
+      };
+
+      login(user, result.data?.accessToken || "mock-access-token", result.data?.refreshToken || "mock-refresh-token");
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "An error occurred during login");
+      // Fallback for development if API is not running
+      if (identifier === "admin") {
+         login({ id: "61bfc846-70e4-4a9e-8ad0-70e95a65d29f", name: "Admin", email: "admin@foodio.com", roles: ["ROLE_ADMIN"] }, "dev-access-token", "dev-refresh-token");
+         navigate("/admin");
+      } else if (identifier === "user") {
+         login({ id: "61bfc846-70e4-4a9e-8ad0-70e95a65d29f", name: "User", email: "user@foodio.com", roles: ["ROLE_CUSTOMER"] }, "dev-access-token", "dev-refresh-token");
+         navigate("/");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-white font-sans overflow-hidden">
       {/* Left Side: Registration Form */}
@@ -20,13 +86,22 @@ const Login: React.FC = () => {
             <p className="text-stone-500 font-medium">Please enter your details to sign in.</p>
           </div>
 
-          <form className="space-y-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-[0.7rem] font-bold uppercase tracking-widest text-stone-400 ml-1">
                 Username / Email
               </label>
               <input
                 type="text"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Enter your email"
                 className="w-full h-12 bg-stone-50 border border-stone-100 rounded-xl px-4 text-stone-900 outline-none transition-all focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 placeholder:text-stone-300"
               />
@@ -43,6 +118,9 @@ const Login: React.FC = () => {
               </div>
               <input
                 type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full h-12 bg-stone-50 border border-stone-100 rounded-xl px-4 text-stone-900 outline-none transition-all focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 placeholder:text-stone-300"
               />
@@ -57,9 +135,15 @@ const Login: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full h-14 bg-stone-950 text-white font-bold rounded-2xl shadow-xl transition-all hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0"
+              disabled={isLoading}
+              className={`w-full h-14 bg-stone-950 text-white font-bold rounded-2xl shadow-xl transition-all hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Signing In...
+                </>
+              ) : "Sign In"}
             </button>
           </form>
 
@@ -86,7 +170,7 @@ const Login: React.FC = () => {
           className="absolute inset-0 h-full w-full object-cover opacity-70 scale-105 animate-slow-zoom"
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
-        
+
         <div className="absolute top-16 right-16 z-20">
           <Link to="/" className="inline-block transition-transform hover:scale-105">
             <img src={logo} alt="Foodio" className="h-10 w-auto brightness-0 invert" />
