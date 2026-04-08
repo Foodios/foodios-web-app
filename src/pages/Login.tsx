@@ -54,7 +54,11 @@ const Login: React.FC = () => {
       };
 
       login(user, result.data?.accessToken || "mock-access-token", result.data?.refreshToken || "mock-refresh-token");
-      navigate("/");
+      
+      // Handle redirect after login
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectPath = urlParams.get('redirect');
+      navigate(redirectPath || "/");
     } catch (err: any) {
       setError(err.message || "An error occurred during login");
       // Fallback for development if API is not running
@@ -63,7 +67,10 @@ const Login: React.FC = () => {
          navigate("/admin");
       } else if (identifier === "user") {
          login({ id: "61bfc846-70e4-4a9e-8ad0-70e95a65d29f", name: "User", email: "user@foodio.com", roles: ["ROLE_CUSTOMER"] }, "dev-access-token", "dev-refresh-token");
-         navigate("/");
+         
+         const urlParams = new URLSearchParams(window.location.search);
+         const redirectPath = urlParams.get('redirect');
+         navigate(redirectPath || "/");
       }
     } finally {
       setIsLoading(false);

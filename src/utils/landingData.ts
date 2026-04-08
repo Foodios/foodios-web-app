@@ -9,6 +9,7 @@ export const featureCards = [
     image: foodEmployee,
     eyebrow: "Business",
     note: "Meal programs, team lunches, recurring orders.",
+    link: "/blog/feed-your-employee"
   },
   {
     title: "Your restaurant, delivered",
@@ -16,6 +17,7 @@ export const featureCards = [
     image: foodCooking,
     eyebrow: "Restaurants",
     note: "Better visibility, smarter orders, easy delivery.",
+    link: "/blog/your-restaurant-delivered"
   },
   {
     title: "Deliver with Foodio",
@@ -23,8 +25,9 @@ export const featureCards = [
     image: foodDelivery,
     eyebrow: "Delivery",
     note: "Flexible shifts, local routes, fast onboarding.",
+    link: "/blog/deliver-with-foodio"
   },
-] as const;
+];
 
 export const cities = [
   "Pizza 4P's",

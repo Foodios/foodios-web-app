@@ -31,12 +31,14 @@ interface AuthContextType {
   logout: () => Promise<void>;
   fetchProfile: () => Promise<void>;
   updateUserAvatar: (newUrl: string) => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = useCallback(async () => {
     const userId = localStorage.getItem('userId');
@@ -89,7 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
-      fetchProfile(); // Refresh profile data on load
+      fetchProfile().finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
   }, [fetchProfile]);
 
@@ -138,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, fetchProfile, updateUserAvatar }}>
+    <AuthContext.Provider value={{ user, login, logout, fetchProfile, updateUserAvatar, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

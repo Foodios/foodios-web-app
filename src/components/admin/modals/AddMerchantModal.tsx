@@ -1,25 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { X, Store, MapPin, Phone, Mail, Clock, ShieldCheck, Image, Camera } from 'lucide-react';
+import { X, Store, Mail, Phone, Camera, Image, Loader2 } from 'lucide-react';
+import { adminService } from '../../../services/adminService';
 
 interface AddMerchantModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (merchant: any) => void;
+  editingMerchant?: any;
 }
 
-const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, onAdd, editingMerchant }) => {
   const [formData, setFormData] = useState({
     name: '',
+    displayName: '',
     category: 'Italian',
+    cuisineCategory: '',
     location: '',
     phone: '',
     email: '',
     openingHours: '09:00 - 22:00',
     status: 'Active',
-    logo: '🍕'
+    description: '',
+    logoUrl: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = ['Italian', 'Vietnamese', 'Dessert', 'Fine Dining', 'BBQ', 'Healthy', 'Japanese', 'Fast Food'];
+  // Update form data when editingMerchant changes
+  useEffect(() => {
+    if (editingMerchant) {
+      setFormData({
+        name: editingMerchant.name || '',
+        displayName: editingMerchant.displayName || '',
+        category: editingMerchant.category || 'Italian',
+        cuisineCategory: editingMerchant.cuisineCategory || '',
+        location: editingMerchant.location || '',
+        phone: editingMerchant.phone || '',
+        email: editingMerchant.email || '',
+        openingHours: editingMerchant.openingHours || '09:00 - 22:00',
+        status: editingMerchant.status || 'Active',
+        description: editingMerchant.description || '',
+        logoUrl: editingMerchant.logoUrl || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        displayName: '',
+        category: 'Italian',
+        cuisineCategory: '',
+        location: '',
+        phone: '',
+        email: '',
+        openingHours: '09:00 - 22:00',
+        status: 'Active',
+        description: '',
+        logoUrl: ''
+      });
+    }
+  }, [editingMerchant, isOpen]);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -32,15 +69,30 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd({
-      ...formData,
-      id: `M${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      rating: 0.0,
-      orders: 0
-    });
-    onClose();
+    setIsSubmitting(true);
+    try {
+      if (editingMerchant) {
+        // Update existing merchant
+        const result = await adminService.updateMerchant(editingMerchant.id, formData);
+        onAdd(result.data || result); // onAdd here acts as onRefresh/onUpdate
+      } else {
+        // Create new merchant (API endpoint for create might be needed, but for now we follow old logic or use get/save)
+        // If there's no create API yet in adminService, we just emit the data
+        onAdd({
+          ...formData,
+          id: `M${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+          rating: 0.0,
+          orders: 0
+        });
+      }
+      onClose();
+    } catch (error: any) {
+      alert(error.message || "Failed to save merchant");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -61,13 +113,17 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
               <Store className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-stone-950">Add New Merchant</h2>
-              <p className="text-xs font-medium text-stone-400 uppercase tracking-widest mt-0.5">Register a new partner store</p>
+              <h2 className="text-xl font-bold text-stone-950">
+                {editingMerchant ? "Edit Merchant" : "Add New Merchant"}
+              </h2>
+              <p className="text-xs font-medium text-stone-400 uppercase tracking-widest mt-0.5">
+                {editingMerchant ? "Update partner store details" : "Register a new partner store"}
+              </p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center rounded-fill bg-white border border-stone-100 text-stone-400 hover:text-stone-950 hover:bg-stone-50 transition-all active:scale-90"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-stone-100 text-stone-400 hover:text-stone-950 hover:bg-stone-50 transition-all active:scale-90 outline-none"
           >
             <X className="w-5 h-5" />
           </button>
@@ -82,9 +138,15 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
               <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-3">Merchant Branding</label>
               <div className="flex items-center gap-6">
                 <div className="relative group">
-                  <div className="w-24 h-24 rounded-[32px] bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-300 group-hover:border-stone-400 group-hover:bg-stone-100 transition-all cursor-pointer">
-                    <Camera className="w-8 h-8 mb-1" />
-                    <span className="text-[10px] font-bold">Upload Logo</span>
+                  <div className="w-24 h-24 rounded-[32px] bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center text-stone-300 group-hover:border-stone-400 group-hover:bg-stone-100 transition-all cursor-pointer overflow-hidden">
+                    {formData.logoUrl ? (
+                      <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <Camera className="w-8 h-8 mb-1" />
+                        <span className="text-[10px] font-bold">Upload Logo</span>
+                      </>
+                    )}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white border border-stone-200 rounded-xl flex items-center justify-center shadow-sm text-stone-400 group-hover:text-stone-950 transition-colors">
                     <Image className="w-4 h-4" />
@@ -92,7 +154,13 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
                 </div>
                 <div className="flex-1">
                    <p className="text-sm font-medium text-stone-600 mb-1">Upload merchant representative icon</p>
-                   <p className="text-[0.7rem] text-stone-400">JPG, PNG or GIF. Max size 2MB. Recommendation: 1:1 ratio square image for better display.</p>
+                   <input 
+                     type="text" 
+                     placeholder="Or paste image URL here..."
+                     value={formData.logoUrl}
+                     onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
+                     className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-2 text-[0.7rem] focus:bg-white outline-none"
+                   />
                 </div>
               </div>
             </div>
@@ -100,13 +168,13 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
             {/* General Info */}
             <div className="space-y-4">
               <div>
-                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Merchant Name</label>
+                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Display Name</label>
                 <div className="relative">
                   <input 
                     required
                     type="text" 
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    value={formData.displayName}
+                    onChange={(e) => setFormData({...formData, displayName: e.target.value})}
                     placeholder="e.g. Pizza 4P's"
                     className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none"
                   />
@@ -116,52 +184,46 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
 
               <div>
                 <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Cuisine Category</label>
-                <select 
-                  value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none appearance-none"
-                >
-                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
+                <input 
+                  type="text"
+                  value={formData.cuisineCategory}
+                  onChange={(e) => setFormData({...formData, cuisineCategory: e.target.value})}
+                  placeholder="e.g. Italian, Vietnamese"
+                  className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none"
+                />
               </div>
 
               <div>
-                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Opening Hours</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={formData.openingHours}
-                    onChange={(e) => setFormData({...formData, openingHours: e.target.value})}
-                    placeholder="09:00 - 22:00"
-                    className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none"
-                  />
-                  <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-200" />
-                </div>
+                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Description</label>
+                <textarea 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  placeholder="Short description of the merchant..."
+                  className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none h-24 resize-none"
+                />
               </div>
             </div>
 
-            {/* Contact & Location */}
+            {/* Contact & Status */}
             <div className="space-y-4">
               <div>
-                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Location / District</label>
-                <div className="relative">
-                  <input 
-                    required
-                    type="text" 
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    placeholder="e.g. District 1, HCMC"
-                    className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none"
-                  />
-                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-200" />
-                </div>
+                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Status</label>
+                <select 
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none appearance-none"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Busy">Busy</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
               </div>
 
               <div>
                 <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Contact Email</label>
                 <div className="relative">
                   <input 
-                    required
                     type="email" 
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -173,10 +235,9 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div>
-                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Support Hotline</label>
+                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Hotline</label>
                 <div className="relative">
                   <input 
-                    required
                     type="tel" 
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -187,20 +248,6 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
                 </div>
               </div>
             </div>
-
-            {/* Additional Settings */}
-            <div className="col-span-full pt-4 border-t border-stone-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-green-500" />
-                <span className="text-sm font-bold text-stone-900">Auto-verify merchant after creation</span>
-              </div>
-              <div 
-                className="w-12 h-6 bg-stone-950 rounded-full relative cursor-pointer"
-                onClick={() => {}}
-              >
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-              </div>
-            </div>
           </div>
 
           {/* Buttons */}
@@ -208,15 +255,18 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
             <button 
               type="button"
               onClick={onClose}
-              className="flex-1 h-14 rounded-2xl text-sm font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all active:scale-95"
+              disabled={isSubmitting}
+              className="flex-1 h-14 rounded-2xl text-sm font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all active:scale-95 disabled:opacity-50"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-[2] h-14 bg-stone-950 text-white rounded-2xl text-sm font-bold shadow-xl shadow-stone-950/20 hover:bg-stone-800 transition-all active:scale-95"
+              disabled={isSubmitting}
+              className="flex-[2] h-14 bg-stone-950 text-white rounded-2xl text-sm font-bold shadow-xl shadow-stone-950/20 hover:bg-stone-800 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Confirm and Add Merchant
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {editingMerchant ? "Save Changes" : "Confirm and Add Merchant"}
             </button>
           </div>
         </form>

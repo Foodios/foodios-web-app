@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { featureCards } from "../utils/landingData";
 
 type FeatureCardsProps = {
@@ -58,7 +59,7 @@ function FeatureCards({ active }: FeatureCardsProps) {
               key={card.title}
               style={{ transitionDelay: `${400 + index * 150}ms` }}
             >
-              <div className="relative aspect-[4/3] overflow-hidden">
+              <Link to={card.link} className="relative aspect-[4/3] block overflow-hidden">
                 <img
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.1]"
                   src={card.image}
@@ -71,13 +72,15 @@ function FeatureCards({ active }: FeatureCardsProps) {
                 <span className="absolute bottom-5 left-5 inline-flex rounded-full border border-white/30 bg-black/20 px-3.5 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-xl">
                   {card.eyebrow}
                 </span>
-              </div>
+              </Link>
               <div className="space-y-4 p-6">
                 <div className="flex items-start justify-between gap-6">
                   <div>
-                    <h3 className="m-0 text-[1.4rem] font-bold leading-tight tracking-[-0.03em] text-stone-950 transition-colors group-hover:text-stone-700">
-                      {card.title}
-                    </h3>
+                    <Link to={card.link}>
+                      <h3 className="m-0 text-[1.4rem] font-bold leading-tight tracking-[-0.03em] text-stone-950 transition-colors group-hover:text-stone-700 hover:text-orange-600">
+                        {card.title}
+                      </h3>
+                    </Link>
                     <p className="mt-2.5 mb-0 text-[0.9rem] leading-relaxed text-stone-500">
                       {card.note}
                     </p>
@@ -87,13 +90,13 @@ function FeatureCards({ active }: FeatureCardsProps) {
                   </div>
                 </div>
                 <div className="pt-5 border-t border-stone-100 flex items-center justify-between">
-                  <a
+                  <Link
                     className="group/btn relative inline-flex items-center text-sm font-bold text-stone-950"
-                    href="#footer"
+                    to={card.link}
                   >
                     <span className="relative z-10">{card.description}</span>
                     <div className="absolute -bottom-1 left-0 h-1.5 w-full bg-stone-100 transition-all duration-300 group-hover/btn:h-0.5 group-hover/btn:bg-stone-400" />
-                  </a>
+                  </Link>
                   <span className="text-[0.6rem] font-black uppercase tracking-[0.25em] text-stone-300">
                     Join Now
                   </span>

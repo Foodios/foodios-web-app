@@ -1,30 +1,57 @@
+import React from 'react';
 import { 
   Search, 
-  Sun, 
-  History, 
-  Bell, 
-  Sidebar as SidebarIcon, 
-  Star,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 
 function AdminTopBar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Generate breadcrumbs from path
+  const pathnames = location.pathname.split('/').filter((x) => x);
+
   return (
     <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-stone-200">
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-3">
-          <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-stone-50 transition-colors">
-            <SidebarIcon className="w-4.5 h-4.5 text-stone-950" />
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate(-1)}
+            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-stone-50 border border-transparent hover:border-stone-100 transition-all text-stone-400 hover:text-stone-950 active:scale-90"
+          >
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <button className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-stone-50 transition-colors">
-            <Star className="w-4.5 h-4.5 text-stone-400" />
+          <button 
+            onClick={() => navigate(1)}
+            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-stone-50 border border-transparent hover:border-stone-100 transition-all text-stone-400 hover:text-stone-950 active:scale-90"
+          >
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
         <nav className="flex items-center gap-2 text-sm text-stone-500 font-medium">
-          <span className="hover:text-stone-900 transition-colors">Dashboards</span>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
-          <span className="text-stone-900">Default</span>
+          <Link to="/admin" className="hover:text-stone-900 transition-colors capitalize">
+            Admin
+          </Link>
+          {pathnames.slice(1).map((value, index) => {
+            const last = index === pathnames.length - 2;
+            const to = `/${pathnames.slice(0, index + 2).join('/')}`;
+
+            return (
+              <React.Fragment key={to}>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+                {last ? (
+                  <span className="text-stone-900 capitalize">{value.replace('-', ' ')}</span>
+                ) : (
+                  <Link to={to} className="hover:text-stone-900 transition-colors capitalize">
+                    {value.replace('-', ' ')}
+                  </Link>
+                )}
+              </React.Fragment>
+            );
+          })}
         </nav>
       </div>
 
@@ -40,13 +67,6 @@ function AdminTopBar() {
           <span className="text-[0.6rem] font-bold text-stone-300 tracking-tighter bg-white px-1 py-0.5 rounded border border-stone-200">⌘/</span>
         </div>
 
-        <div className="flex items-center gap-1">
-          {[Sun, History, Bell, SidebarIcon].map((Icon, i) => (
-            <button key={i} className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-stone-50 transition-colors">
-              <Icon className="w-4.5 h-4.5 text-stone-600" />
-            </button>
-          ))}
-        </div>
       </div>
     </header>
   );

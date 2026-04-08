@@ -1,16 +1,12 @@
 import { 
   LayoutDashboard, 
-  Activity,
   Store,
   ShoppingBag,
-  Bike,
-  Utensils,
   Percent,
   Users,
   Settings,
   UserCircle,
   Building2,
-  BellRing,
   ChevronRight,
   Circle
 } from "lucide-react";
@@ -19,31 +15,27 @@ import { Link, useLocation } from "react-router-dom";
 
 const menuItems = [
   { group: "Overview", items: [
-    { name: "Global Dashboard", icon: LayoutDashboard, path: "/admin" },
-    { name: "Real-time Monitor", icon: Activity, path: "/admin/monitor" }
+    { name: "Global Dashboard", icon: LayoutDashboard, path: "/admin" }
   ]},
   { 
     group: "Management", 
     items: [
-      { name: "Merchants", icon: Store, path: "/admin/merchants", subItems: ["Active Shops", "Applications", "Schedules", "Payments"] },
+      { name: "Merchants", icon: Store, path: "/admin/merchants", subItems: ["Active Shops", "Applications", "Payments"] },
       { name: "Live Orders", icon: ShoppingBag, path: "/admin/orders", subItems: ["In Progress", "Scheduled", "Canceled"] },
-      { name: "Driver Fleet", icon: Bike, path: "/admin/drivers", subItems: ["Active Riders", "KYC Verification", "Payouts"] },
-      { name: "Catalog & Menus", icon: Utensils, path: "/admin/catalog", subItems: ["Categories", "Product List", "Add-ons"] },
-      { name: "Promotions", icon: Percent, path: "/admin/promotions", subItems: ["Coupons", "Flash Sales", "Banner Ads"] }
+      { name: "Promotions", icon: Percent, path: "/admin/promotions" }
     ] 
   },
   {
     group: "Clients & Users",
     items: [
-      { name: "Customers", icon: Users },
-      { name: "Corporate", icon: Building2 },
-      { name: "Admin Staff", icon: UserCircle }
+      { name: "Customers", icon: Users, path: "/admin/users/customer" },
+      { name: "Corporate", icon: Building2, path: "/admin/users/corporate" },
+      { name: "Admin Staff", icon: UserCircle, path: "/admin/users/admin" }
     ]
   },
   {
     group: "System",
     items: [
-      { name: "Notifications", icon: BellRing },
       { name: "Global Settings", icon: Settings }
     ]
   }
@@ -85,13 +77,21 @@ function AdminSidebar() {
                     </Link>
                     {active && item.subItems && (
                       <ul className="mt-2 ml-5 flex flex-col gap-1 border-l-2 border-stone-100 pl-4 py-1">
-                        {item.subItems.map((sub: string) => (
-                          <li key={sub}>
-                            <button className="w-full py-2 text-left text-[0.8rem] text-stone-500 hover:text-stone-950 font-medium transition-colors relative before:content-[''] before:absolute before:left-[-18px] before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:bg-stone-300 before:rounded-full hover:before:bg-orange-500 hover:before:scale-150 transition-all">
-                              {sub}
-                            </button>
-                          </li>
-                        ))}
+                        {item.subItems.map((sub: string) => {
+                          const tabParam = sub.toLowerCase().replace(/\s+/g, '-');
+                          const isActiveTab = location.search === `?tab=${tabParam}` || (sub === "Active Shops" && !location.search);
+                          
+                          return (
+                            <li key={sub}>
+                              <Link 
+                                to={`${item.path}?tab=${tabParam}`}
+                                className={`w-full py-2 block text-left text-[0.8rem] transition-colors relative before:content-[''] before:absolute before:left-[-18px] before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:rounded-full transition-all ${isActiveTab ? "text-stone-950 font-bold before:bg-orange-500 before:scale-150" : "text-stone-500 hover:text-stone-950 font-medium before:bg-stone-300"}`}
+                              >
+                                {sub}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>

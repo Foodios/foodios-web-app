@@ -22,7 +22,7 @@ function Header({ isHeroActive, onMenuClick }: HeaderProps) {
     : "border-black/10 bg-white text-stone-900";
 
   return (
-    <header className={`fixed left-0 right-0 top-0 z-30 transition-colors duration-300 backdrop-blur-md ${shellClass}`}>
+    <header className={`sticky top-0 z-30 transition-colors duration-300 backdrop-blur-md ${shellClass}`}>
       <div className="flex w-full items-center justify-between gap-5 px-3 py-4 sm:px-4 lg:px-5 max-[820px]:items-start">
         <div className="flex min-w-0 items-center gap-2">
           <button

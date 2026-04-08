@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { 
   Store, MapPin, Clock, ChevronRight, ChevronLeft,
   ArrowLeft, Upload, CheckCircle2, Loader2, User, 
-  Lock, Building2, CreditCard, FileCheck, Globe, Trash2, Plus
+  Building2, CreditCard, FileCheck, Globe
 } from "lucide-react";
 import Header from "../components/Header";
 import SideNav from "../components/SideNav";
+import { useAuth } from "../context/AuthContext";
+import { generateApiMetadata } from "../utils/apiMetadata";
 
 const BUSINESS_TYPES = [
   { value: "RESTAURANT", label: "Restaurant" },
@@ -28,8 +30,13 @@ const DAYS_OF_WEEK = [
 
 const MerchantRegistration: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const businessLicenseRef = React.useRef<HTMLInputElement>(null);
+  const foodSafetyRef = React.useRef<HTMLInputElement>(null);
+
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState<{ [key: string]: boolean }>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
 
@@ -42,8 +49,8 @@ const MerchantRegistration: React.FC = () => {
       password: ""
     },
     merchant: {
-      merchantName: "",
-      brandName: "",
+      legalName: "",
+      displayName: "",
       description: "",
       businessType: "RESTAURANT",
       taxCode: "",
@@ -109,8 +116,8 @@ const MerchantRegistration: React.FC = () => {
           formData.owner.email.trim() !== "" &&
           formData.owner.phone.trim() !== "" &&
           formData.owner.password.trim() !== "" &&
-          formData.merchant.merchantName.trim() !== "" &&
-          formData.merchant.brandName.trim() !== ""
+          formData.merchant.legalName.trim() !== "" &&
+          formData.merchant.displayName.trim() !== ""
         );
       case 2:
         return (
@@ -141,9 +148,62 @@ const MerchantRegistration: React.FC = () => {
       setStep(prev => Math.min(prev + 1, 4));
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "businessLicenseImageUrl" | "foodSafetyLicenseImageUrl") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    setIsUploading(prev => ({ ...prev, [field]: true }));
+    const metadata = generateApiMetadata("OFF");
+    const accessToken = localStorage.getItem('accessToken');
+
+    if (!accessToken) {
+      alert("Authentication required. Please log in first.");
+      setIsUploading(prev => ({ ...prev, [field]: false }));
+      return;
+    }
+
+    const uploadFormData = new FormData();
+    uploadFormData.append('data.file', file);
+    uploadFormData.append('data.folder', `merchants/licenses/${user?.id || 'guest'}`);
+    uploadFormData.append('data.publicId', `${field}-${Date.now()}`);
+    uploadFormData.append('requestId', metadata.requestId);
+    uploadFormData.append('requestDateTime', metadata.requestDateTime);
+    uploadFormData.append('channel', metadata.channel);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/v1/media/upload", {
+        method: "POST",
+        headers: {
+          "accept": "*/*",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: uploadFormData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const imageUrl = result.data.secureUrl || result.data.url;
+        updateNestedField("merchant", field, imageUrl);
+      } else {
+        alert("Upload failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload document.");
+    } finally {
+      setIsUploading(prev => ({ ...prev, [field]: false }));
+      if (e.target) e.target.value = "";
+    }
+  };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 4) {
       nextStep();
@@ -151,13 +211,62 @@ const MerchantRegistration: React.FC = () => {
     }
     
     setIsSubmitting(true);
-    console.log("Submitting Merchant Data:", formData);
     
-    // Simulating API call
-    setTimeout(() => {
+    const metadata = generateApiMetadata("OFF");
+    const accessToken = localStorage.getItem('accessToken');
+    
+    // Transform operating hours to filter out closed days and match API format
+    const activeHours = formData.operatingHours
+      .filter(oh => !oh.closed)
+      .map(oh => ({
+        dayOfWeek: oh.dayOfWeek.toString(),
+        openTime: oh.openTime,
+        closeTime: oh.closeTime
+      }));
+
+    const payload = {
+      ...metadata,
+      data: {
+        userId: user?.id || "string",
+        owner: formData.owner,
+        merchant: formData.merchant,
+        address: {
+          line1: formData.address.line1,
+          line2: formData.address.line2,
+          district: formData.address.district,
+          city: formData.address.city,
+          province: formData.address.province,
+          postalCode: formData.address.postalCode,
+          country: formData.address.country
+        },
+        payout: formData.payout,
+        operatingHours: activeHours.length > 0 ? activeHours[0] : null // Matching the single object in curl, but usually would be an array.
+      }
+    };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/merchants/signup', {
+        method: "POST",
+        headers: {
+          "accept": "*/*",
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        setIsSuccess(true);
+      } else {
+        const errorData = await response.json();
+        alert(`Registration failed: ${errorData.message || "Please check your inputs"}`);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Something went wrong. Please try again later.");
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 2500);
+    }
   };
 
   if (isSuccess) {
@@ -170,7 +279,7 @@ const MerchantRegistration: React.FC = () => {
           <div className="space-y-3">
             <h1 className="text-3xl font-black text-stone-950">Application Received!</h1>
             <p className="text-stone-500 font-medium leading-relaxed">
-              We've received your registration for <span className="text-stone-950 font-bold">{formData.merchant.merchantName}</span>. Our team will verify your documents and get back to you shortly.
+              We've received your registration for <span className="text-stone-950 font-bold">{formData.merchant.legalName}</span>. Our team will verify your documents and get back to you shortly.
             </p>
           </div>
           <button 
@@ -303,12 +412,12 @@ const MerchantRegistration: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
-                        <label className="text-[0.65rem] font-black text-stone-400 uppercase tracking-widest ml-1">Merchant Name</label>
-                        <input required type="text" value={formData.merchant.merchantName} onChange={(e) => updateNestedField("merchant", "merchantName", e.target.value)} placeholder="Full Legal Name" className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-orange-500 outline-none transition-all font-medium" />
+                        <label className="text-[0.65rem] font-black text-stone-400 uppercase tracking-widest ml-1">Legal Name</label>
+                        <input required type="text" value={formData.merchant.legalName} onChange={(e) => updateNestedField("merchant", "legalName", e.target.value)} placeholder="Full Legal Name" className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-orange-500 outline-none transition-all font-medium" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[0.65rem] font-black text-stone-400 uppercase tracking-widest ml-1">Brand Name</label>
-                        <input required type="text" value={formData.merchant.brandName} onChange={(e) => updateNestedField("merchant", "brandName", e.target.value)} placeholder="Public Display Name" className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-orange-500 outline-none transition-all font-medium" />
+                        <label className="text-[0.65rem] font-black text-stone-400 uppercase tracking-widest ml-1">Display Name</label>
+                        <input required type="text" value={formData.merchant.displayName} onChange={(e) => updateNestedField("merchant", "displayName", e.target.value)} placeholder="Public Display Name" className="w-full h-12 px-4 rounded-xl bg-stone-50 border border-stone-100 focus:bg-white focus:border-orange-500 outline-none transition-all font-medium" />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-[0.65rem] font-black text-stone-400 uppercase tracking-widest ml-1">Business Type</label>
@@ -355,15 +464,70 @@ const MerchantRegistration: React.FC = () => {
                       <h3 className="text-xl font-black text-stone-950">Documents Upload</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="border-2 border-dashed border-stone-100 rounded-3xl p-6 text-center hover:border-blue-200 transition-all cursor-pointer bg-stone-50/30">
-                        <Upload className="w-6 h-6 text-stone-300 mx-auto mb-2" />
-                        <p className="text-xs font-black text-stone-950">Business License Image</p>
-                        <p className="text-[0.6rem] text-stone-400 uppercase font-bold mt-1">Required</p>
+                      <input 
+                        type="file" 
+                        ref={businessLicenseRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, "businessLicenseImageUrl")} 
+                      />
+                      <div 
+                        onClick={() => businessLicenseRef.current?.click()}
+                        className={`border-2 border-dashed rounded-3xl p-6 text-center transition-all cursor-pointer bg-stone-50/30 relative overflow-hidden group h-32 flex flex-col items-center justify-center ${formData.merchant.businessLicenseImageUrl ? "border-green-500 bg-green-50/10" : "border-stone-100 hover:border-blue-200"}`}
+                      >
+                        {isUploading.businessLicenseImageUrl ? (
+                          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                        ) : formData.merchant.businessLicenseImageUrl ? (
+                          <>
+                            <div className="absolute inset-0 z-0 opacity-20">
+                              <img src={formData.merchant.businessLicenseImageUrl} alt="" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="relative z-10 flex flex-col items-center">
+                              <CheckCircle2 className="w-6 h-6 text-green-500 mb-1" />
+                              <p className="text-xs font-black text-green-600">License Uploaded</p>
+                              <p className="text-[0.6rem] text-green-400 uppercase font-bold">Click to change</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-stone-300 group-hover:scale-110 transition-transform mb-2" />
+                            <p className="text-xs font-black text-stone-950">Business License Image</p>
+                            <p className="text-[0.6rem] text-stone-400 uppercase font-bold mt-1">Required</p>
+                          </>
+                        )}
                       </div>
-                      <div className="border-2 border-dashed border-stone-100 rounded-3xl p-6 text-center hover:border-green-200 transition-all cursor-pointer bg-stone-50/30">
-                        <Upload className="w-6 h-6 text-stone-300 mx-auto mb-2" />
-                        <p className="text-xs font-black text-stone-950">Food Safety License</p>
-                        <p className="text-[0.6rem] text-stone-400 uppercase font-bold mt-1">Required</p>
+
+                      <input 
+                        type="file" 
+                        ref={foodSafetyRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, "foodSafetyLicenseImageUrl")} 
+                      />
+                      <div 
+                        onClick={() => foodSafetyRef.current?.click()}
+                        className={`border-2 border-dashed rounded-3xl p-6 text-center transition-all cursor-pointer bg-stone-50/30 relative overflow-hidden group h-32 flex flex-col items-center justify-center ${formData.merchant.foodSafetyLicenseImageUrl ? "border-green-500 bg-green-50/10" : "border-stone-100 hover:border-green-200"}`}
+                      >
+                        {isUploading.foodSafetyLicenseImageUrl ? (
+                          <Loader2 className="w-6 h-6 text-green-500 animate-spin" />
+                        ) : formData.merchant.foodSafetyLicenseImageUrl ? (
+                          <>
+                            <div className="absolute inset-0 z-0 opacity-20">
+                              <img src={formData.merchant.foodSafetyLicenseImageUrl} alt="" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="relative z-10 flex flex-col items-center">
+                              <CheckCircle2 className="w-6 h-6 text-green-500 mb-1" />
+                              <p className="text-xs font-black text-green-600">Safety Cert Uploaded</p>
+                              <p className="text-[0.6rem] text-green-400 uppercase font-bold">Click to change</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-stone-300 group-hover:scale-110 transition-transform mb-2" />
+                            <p className="text-xs font-black text-stone-950">Food Safety License</p>
+                            <p className="text-[0.6rem] text-stone-400 uppercase font-bold mt-1">Required</p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
