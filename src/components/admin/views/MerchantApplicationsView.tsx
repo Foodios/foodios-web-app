@@ -10,11 +10,13 @@ interface ApplicationReviewModalProps {
   application: any;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (id: string) => void;
+  onApprove: (id: string, commissionRate?: number) => void;
   onReject: (id: string) => void;
 }
 
 const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({ application, isOpen, onClose, onApprove, onReject }) => {
+  const [commissionRate, setCommissionRate] = useState<number>(15.0);
+  
   if (!isOpen || !application) return null;
 
   return (
@@ -167,7 +169,20 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({ applica
 
         <footer className="p-8 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
           <button onClick={onClose} className="h-14 px-8 rounded-2xl border border-stone-200 text-stone-950 font-bold hover:bg-white transition-all">Close Detail</button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 bg-white border border-stone-200 px-4 py-2 rounded-2xl shadow-inner">
+               <div className="flex flex-col">
+                  <span className="text-[0.55rem] font-black text-stone-400 uppercase tracking-widest">Commission (%)</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={commissionRate}
+                    onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
+                    className="w-16 bg-transparent text-sm font-black text-stone-950 outline-none"
+                    placeholder="15.0"
+                  />
+               </div>
+            </div>
             <button 
               onClick={() => onReject(application.id)} 
               className="h-14 px-10 rounded-2xl border border-red-200 bg-red-50 text-red-600 font-black hover:bg-red-100 transition-all font-sans"
@@ -175,7 +190,7 @@ const ApplicationReviewModal: React.FC<ApplicationReviewModalProps> = ({ applica
               Reject
             </button>
             <button 
-              onClick={() => onApprove(application.id)} 
+              onClick={() => onApprove(application.id, commissionRate)} 
               className="h-14 px-12 rounded-2xl bg-stone-950 text-white font-black hover:bg-orange-600 transition-all shadow-xl shadow-stone-200 font-sans"
             >
               Approve Partner
@@ -274,8 +289,8 @@ const MerchantApplicationsView: React.FC<{ onBack: () => void }> = ({ onBack }) 
     }
   };
 
-  const handleApprove = async (id: string) => {
-    if (!window.confirm("Are you sure you want to APPROVE this merchant application?")) return;
+  const handleApprove = async (id: string, commissionRate?: number) => {
+    if (!window.confirm(`Are you sure you want to APPROVE this merchant application with ${commissionRate || 15}% commission?`)) return;
     
     const accessToken = localStorage.getItem('accessToken');
     const metadata = generateApiMetadata("ONL");
@@ -289,7 +304,7 @@ const MerchantApplicationsView: React.FC<{ onBack: () => void }> = ({ onBack }) 
         },
         body: JSON.stringify({
           ...metadata,
-          data: { id }
+          data: { id, commissionRate }
         })
       });
 

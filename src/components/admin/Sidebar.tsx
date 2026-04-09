@@ -21,7 +21,7 @@ const menuItems = [
     group: "Management", 
     items: [
       { name: "Merchants", icon: Store, path: "/admin/merchants", subItems: ["Active Shops", "Applications", "Payments"] },
-      { name: "Live Orders", icon: ShoppingBag, path: "/admin/orders", subItems: ["In Progress", "Scheduled", "Canceled"] },
+      { name: "Live Orders", icon: ShoppingBag, path: "/admin/orders" },
       { name: "Promotions", icon: Percent, path: "/admin/promotions" }
     ] 
   },

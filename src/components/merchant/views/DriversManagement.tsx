@@ -24,6 +24,7 @@ const DriversManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userIdInput, setUserIdInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   const fetchDrivers = async () => {
@@ -32,7 +33,7 @@ const DriversManagement = () => {
     
     setIsLoading(true);
     try {
-      const result = await merchantService.getMerchantDrivers(merchantId);
+      const result = await merchantService.getMerchantDrivers(merchantId, searchQuery);
       // More robust extraction of the array
       const rawData = result.data || result;
       const driversArray = Array.isArray(rawData) ? rawData : (rawData.drivers || []);
@@ -48,7 +49,7 @@ const DriversManagement = () => {
 
   useEffect(() => {
     fetchDrivers();
-  }, [merchant?.id, merchant?.merchantId]);
+  }, [merchant?.id, merchant?.merchantId, searchQuery]);
 
   const handleAddDriver = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,6 +144,8 @@ const DriversManagement = () => {
             <input 
               type="text"
               placeholder="Search by name, email or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-stone-50 border-none rounded-2xl text-sm font-bold placeholder:text-stone-400 focus:ring-2 focus:ring-orange-500/20 transition-all"
             />
           </div>

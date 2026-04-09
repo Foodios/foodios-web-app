@@ -40,7 +40,7 @@ export const merchantService = {
 
   // GET: Fetch dashboard metrics
   getDashboardStats: async (merchantId: string) => {
-    const response = await fetch(`${BASE_URL}/stats/${merchantId}`, {
+    const response = await fetch(`${BASE_URL}/dashboard?merchantId=${merchantId}`, {
       method: "GET",
       headers: {
         ...getAuthHeader(),
@@ -58,14 +58,21 @@ export const merchantService = {
         // Fallback for demo if endpoint not found
         return {
             data: {
-                dailyRevenue: 1250000,
-                totalOrders: 42,
-                newCustomers: 12,
-                avgReview: 4.8,
-                revenueChange: 12.5,
-                ordersChange: 5.2,
-                customersChange: -2.1,
-                reviewsChange: 0.5
+                summary: {
+                    dailyRevenue: { value: "1,250,000 VND", changePercentage: 12.5, isIncrease: true },
+                    totalOrders: { value: "42", changePercentage: 5.2, isIncrease: true },
+                    activeCustomers: { value: "12", changePercentage: -2.1, isIncrease: false },
+                    merchantRating: { value: "4.8", changePercentage: 0.5, isIncrease: true }
+                },
+                analytics: {
+                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+                    onlineData: [12, 15, 10, 18, 14, 16, 24],
+                    posData: [18, 14, 21, 12, 11, 18, 15]
+                },
+                systemStatus: {
+                    efficiency: 98.4,
+                    waitTime: 12
+                }
             }
         };
     }
@@ -73,8 +80,8 @@ export const merchantService = {
   },
 
   // GET: Fetch merchant orders
-  getMerchantOrders: async (merchantId: string, page: number = 1, size: number = 20) => {
-    const response = await fetch(`${BASE_URL}/orders?merchantId=${merchantId}&pageNumber=${page}&pageSize=${size}`, {
+  getMerchantOrders: async (merchantId: string, page: number = 1, size: number = 20, query: string = "") => {
+    const response = await fetch(`${BASE_URL}/orders?merchantId=${merchantId}&pageNumber=${page}&pageSize=${size}${query ? `&query=${encodeURIComponent(query)}` : ""}`, {
       method: "GET",
       headers: {
         ...getAuthHeader(),
@@ -93,8 +100,8 @@ export const merchantService = {
   },
 
   // GET: Fetch merchant order history
-  getMerchantOrderHistory: async (merchantId: string, page: number = 1, size: number = 20) => {
-    const response = await fetch(`${BASE_URL}/orders/history?merchantId=${merchantId}&pageNumber=${page}&pageSize=${size}`, {
+  getMerchantOrderHistory: async (merchantId: string, page: number = 1, size: number = 20, query: string = "") => {
+    const response = await fetch(`${BASE_URL}/orders/history?merchantId=${merchantId}&pageNumber=${page}&pageSize=${size}${query ? `&query=${encodeURIComponent(query)}` : ""}`, {
       method: "GET",
       headers: {
         ...getAuthHeader(),
@@ -208,8 +215,8 @@ export const merchantService = {
   },
 
   // GET: Fetch drivers for a merchant
-  getMerchantDrivers: async (merchantId: string) => {
-    const response = await fetch(`${BASE_URL}/drivers?merchantId=${merchantId}`, {
+  getMerchantDrivers: async (merchantId: string, query: string = "") => {
+    const response = await fetch(`${BASE_URL}/drivers?merchantId=${merchantId}${query ? `&query=${encodeURIComponent(query)}` : ""}`, {
       method: "GET",
       headers: {
         ...getAuthHeader(),

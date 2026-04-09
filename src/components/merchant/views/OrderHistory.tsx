@@ -51,7 +51,7 @@ function OrderHistory() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await merchantService.getMerchantOrderHistory(merchantId);
+      const result = await merchantService.getMerchantOrderHistory(merchantId, 1, 20, searchTerm);
       
       let orderList = [];
       const data = result.data || result;
@@ -79,14 +79,9 @@ function OrderHistory() {
 
   useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+  }, [fetchHistory, searchTerm]);
 
-  // Client-side search filtering
-  const filteredOrders = orders.filter(o => 
-    o.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders; // Now filtered by backend
 
   return (
     <div className="flex flex-col gap-8">

@@ -33,6 +33,7 @@ function OrderQueue() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeMenuOrderId, setActiveMenuOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Close menu on click outside
   useEffect(() => {
@@ -83,7 +84,7 @@ function OrderQueue() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await merchantService.getMerchantOrders(merchantId);
+      const result = await merchantService.getMerchantOrders(merchantId, 1, 20, searchQuery);
       
       let orderList = [];
       const data = result.data || result;
@@ -278,7 +279,12 @@ function OrderQueue() {
          <div className="flex items-center gap-3 pr-2">
             <div className="relative group">
                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 group-focus-within:text-stone-950 transition-colors" />
-               <input className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-64" placeholder="Scan or search Order ID..." />
+               <input 
+                 className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-64" 
+                 placeholder="Scan or search Order ID..." 
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+               />
             </div>
             <button className="h-11 w-11 bg-stone-50 border border-stone-100 rounded-2xl flex items-center justify-center hover:bg-stone-50 transition shadow-sm text-stone-400 hover:text-stone-950">
                <Filter className="w-4 h-4" />

@@ -14,7 +14,7 @@ function UsersView() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await adminService.getUsers(role);
+      const result = await adminService.getUsers(role, 1, 20, searchQuery);
       const rawData = result.data || result;
       const finalData = Array.isArray(rawData) ? rawData : (rawData.items || rawData.content || []);
       setUsersList(finalData);
@@ -24,7 +24,7 @@ function UsersView() {
     } finally {
       setIsLoading(false);
     }
-  }, [role]);
+  }, [role, searchQuery]);
 
   useEffect(() => {
     fetchUsers();
@@ -61,7 +61,7 @@ function UsersView() {
               placeholder={`Search ${role} by name or email...`}
             />
           </div>
-          <button className="h-11 px-4 flex items-center gap-2 bg-stone-950 text-white rounded-xl text-sm font-bold hover:bg-stone-800 transition-all">
+          <button onClick={() => fetchUsers()} className="h-11 px-4 flex items-center gap-2 bg-stone-950 text-white rounded-xl text-sm font-bold hover:bg-stone-800 transition-all">
             Search
           </button>
         </div>

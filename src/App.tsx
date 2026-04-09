@@ -20,6 +20,7 @@ import ScrollToTop from "./components/ScrollToTop";
 // Admin Views
 import DashboardHome from "./components/admin/views/DashboardHome";
 import MerchantsView from "./components/admin/views/MerchantsView";
+import MerchantDetail from "./components/admin/views/MerchantDetail";
 import OrdersView from "./components/admin/views/OrdersView";
 import UsersView from "./components/admin/views/UsersView";
 import PromotionsView from "./components/admin/views/PromotionsView";
@@ -67,6 +68,7 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />}>
             <Route index element={<DashboardHome />} />
             <Route path="merchants" element={<MerchantsView />} />
+            <Route path="merchants/:merchantId" element={<MerchantDetail />} />
             <Route path="orders" element={<OrdersView />} />
             <Route path="users/:role" element={<UsersView />} />
             <Route path="promotions" element={<PromotionsView />} />

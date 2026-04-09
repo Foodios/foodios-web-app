@@ -53,5 +53,56 @@ export const userService = {
 
         if (!response.ok) throw new Error("Failed to toggle favorite status");
         return response.json();
+    },
+
+    // Wallet APIs
+    getWalletBalance: async () => {
+        const response = await fetch("http://localhost:8080/api/v1/wallet/balance", {
+            method: "GET",
+            headers: {
+                "accept": "*/*",
+                ...getAuthHeader(),
+                ...getEnvelopeHeaders()
+            }
+        });
+        if (!response.ok) throw new Error("Failed to fetch wallet balance");
+        return response.json();
+    },
+
+    topUpWallet: async (amount: number) => {
+        const metadata = generateApiMetadata("ONL");
+        const response = await fetch("http://localhost:8080/api/v1/wallet/top-up", {
+            method: "POST",
+            headers: {
+                "accept": "*/*",
+                "Content-Type": "application/json",
+                ...getAuthHeader(),
+                ...getEnvelopeHeaders()
+            },
+            body: JSON.stringify({
+                requestId: metadata.requestId,
+                requestDateTime: metadata.requestDateTime,
+                channel: metadata.channel,
+                data: {
+                    amount: amount,
+                    description: `Wallet top-up of ${amount} VND`
+                }
+            })
+        });
+        if (!response.ok) throw new Error("Top-up failed");
+        return response.json();
+    },
+
+    getWalletTransactions: async () => {
+        const response = await fetch("http://localhost:8080/api/v1/wallet/transactions", {
+            method: "GET",
+            headers: {
+                "accept": "*/*",
+                ...getAuthHeader(),
+                ...getEnvelopeHeaders()
+            }
+        });
+        if (!response.ok) throw new Error("Failed to fetch wallet transactions");
+        return response.json();
     }
 };

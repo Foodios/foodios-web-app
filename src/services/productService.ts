@@ -18,10 +18,11 @@ const getEnvelopeHeaders = () => {
 };
 
 export const productService = {
-  getProducts: async (storeId: string, categoryId?: string, status?: string) => {
+  getProducts: async (storeId: string, categoryId?: string, status?: string, query: string = "") => {
     let url = `${BASE_URL}?storeId=${storeId}`;
     if (categoryId && categoryId !== 'all') url += `&categoryId=${categoryId}`;
     if (status && status !== 'ALL') url += `&status=${status.toUpperCase()}`;
+    if (query) url += `&query=${encodeURIComponent(query)}`;
     
     const response = await fetch(url, {
       method: "GET",

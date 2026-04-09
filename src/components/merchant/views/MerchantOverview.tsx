@@ -7,8 +7,7 @@ import {
   Star,
   Activity,
   ArrowRight,
-  UtensilsCrossed,
-  Loader2
+  UtensilsCrossed
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
@@ -97,7 +96,6 @@ function MerchantOverview() {
         </div>
       </header>
 
-      {/* Main Stats */}
       {isLoading ? (
         <div className="grid grid-cols-4 gap-6">
             {[1,2,3,4].map(i => <div key={i} className="h-40 bg-white rounded-[32px] border border-stone-50 animate-pulse" />)}
@@ -106,31 +104,30 @@ function MerchantOverview() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <SmallStatCard 
                 title="Daily Revenue" 
-                value={(stats?.dailyRevenue || 0).toLocaleString()} 
-                suffix="VND"
-                change={stats?.revenueChange || 0} 
+                value={stats?.summary?.dailyRevenue?.value || "0 VND"} 
+                change={stats?.summary?.dailyRevenue?.changePercentage || 0} 
                 color="bg-orange-50 text-orange-600" 
                 icon={DollarSign} 
             />
             <SmallStatCard 
                 title="Total Orders" 
-                value={stats?.totalOrders || 0} 
-                change={stats?.ordersChange || 0} 
+                value={stats?.summary?.totalOrders?.value || "0"} 
+                change={stats?.summary?.totalOrders?.changePercentage || 0} 
                 color="bg-blue-50 text-blue-600" 
                 icon={ShoppingBag} 
             />
             <SmallStatCard 
                 title="Active Customers" 
-                value={stats?.newCustomers || 0} 
-                change={stats?.customersChange || 0} 
+                value={stats?.summary?.activeCustomers?.value || "0"} 
+                change={stats?.summary?.activeCustomers?.changePercentage || 0} 
                 color="bg-green-50 text-green-600" 
                 icon={Users} 
             />
             <SmallStatCard 
                 title="Merchant Rating" 
-                value={stats?.avgReview || 4.5} 
+                value={stats?.summary?.merchantRating?.value || "0.0"} 
                 suffix="/ 5.0"
-                change={stats?.reviewsChange || 0} 
+                change={stats?.summary?.merchantRating?.changePercentage || 0} 
                 color="bg-yellow-50 text-yellow-600" 
                 icon={Star} 
             />
@@ -152,7 +149,11 @@ function MerchantOverview() {
               </div>
            </header>
            <div className="flex-1 min-h-[300px]">
-              <UserGrowthChart />
+              <UserGrowthChart 
+                labels={stats?.analytics?.labels}
+                onlineData={stats?.analytics?.onlineData}
+                posData={stats?.analytics?.posData}
+              />
            </div>
         </div>
 
@@ -168,11 +169,11 @@ function MerchantOverview() {
                   <div className="flex flex-col gap-3">
                      <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
                         <span className="text-[0.6rem] font-black text-stone-500 uppercase tracking-widest">Efficiency</span>
-                        <span className="text-sm font-black text-white">98.4%</span>
+                        <span className="text-sm font-black text-white">{stats?.systemStatus?.efficiency || 98.4}%</span>
                      </div>
                      <div className="flex items-center justify-between p-4 bg-white/10 rounded-2xl border border-white/20">
                         <span className="text-[0.6rem] font-black text-stone-500 uppercase tracking-widest">Wait Time</span>
-                        <span className="text-sm font-black text-green-400">12 min</span>
+                        <span className="text-sm font-black text-green-400">{stats?.systemStatus?.waitTime || 12} min</span>
                      </div>
                   </div>
               </div>

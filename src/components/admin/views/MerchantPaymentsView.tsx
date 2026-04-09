@@ -1,67 +1,93 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ArrowUpRight, ArrowDownRight, DollarSign, 
-  CreditCard, Search, Filter, MoreHorizontal,
-  ArrowRight, CheckCircle2, AlertCircle
+  CreditCard, Filter, MoreHorizontal,
+  ArrowRight, Loader2
 } from "lucide-react";
-
-const mockTransactions = [
-  { id: "TX-9901", merchant: "Pizza 4P's", type: "COMMISSION", amount: -450000, date: "2026-04-08T09:00:00Z", status: "COMPLETED" },
-  { id: "TX-9902", merchant: "Banh Mi Huynh Hoa", type: "PLATFORM_FEE", amount: 1500000, date: "2026-04-08T10:15:00Z", status: "COMPLETED" },
-  { id: "TX-9903", merchant: "Maison Marou", type: "PAYOUT", amount: -2800000, date: "2026-04-08T11:45:00Z", status: "PENDING" },
-  { id: "TX-9904", merchant: "Quan Ut Ut", type: "COMMISSION", amount: -1200000, date: "2026-04-07T15:30:00Z", status: "COMPLETED" },
-  { id: "TX-9905", merchant: "Poke Saigon", type: "PLATFORM_FEE", amount: 1500000, date: "2026-04-07T16:20:00Z", status: "FAILED" },
-];
+import { adminService } from "../../../services/adminService";
 
 const MerchantPaymentsView: React.FC = () => {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [summary, setSummary] = useState({
+    netRevenue: 0,
+    totalPayouts: 0,
+    collectedFees: 0
+  });
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      try {
+        const result = await adminService.getAdminWalletTransactions();
+        const dataItems = result.data?.items || result.data || [];
+        setTransactions(dataItems);
+        
+        // Map the new fields to summary state
+        if (result.data) {
+          setSummary({
+            netRevenue: result.data.netRevenue || 0,
+            totalPayouts: result.data.totalPayout || 0,
+            collectedFees: result.data.totalCommission || 0
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin transactions:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTransactions();
+  }, []);
+
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500">
       
       {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-stone-950 rounded-[32px] p-8 text-white relative overflow-hidden group border border-white/5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-stone-950 rounded-[28px] p-6 text-white relative overflow-hidden group border border-white/5">
            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-orange-500" />
+              <div className="flex items-center justify-between mb-5">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-orange-500" />
                 </div>
-                <span className="text-[0.6rem] font-black text-stone-500 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">Net Revenue</span>
+                <span className="text-[0.55rem] font-black text-stone-500 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">Net Revenue</span>
               </div>
-              <h2 className="text-3xl font-black tracking-tighter mb-1">1,240.50M <span className="text-stone-600 text-xs">VND</span></h2>
-              <div className="flex items-center gap-1.5 text-green-400 text-xs font-bold">
-                <ArrowUpRight className="w-3 h-3" /> +12.5% vs last month
+              <h2 className="text-2xl font-black tracking-tighter mb-1">{summary.netRevenue.toLocaleString()} <span className="text-stone-600 text-[10px] uppercase font-bold">VND</span></h2>
+              <div className="flex items-center gap-1.5 text-green-400 text-[10px] font-bold">
+                <ArrowUpRight className="w-2.5 h-2.5" /> +12.5% vs last month
               </div>
            </div>
            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <CreditCard className="w-24 h-24 rotate-12" />
+              <CreditCard className="w-20 h-20 rotate-12" />
            </div>
         </div>
 
-        <div className="bg-white rounded-[32px] p-8 border border-stone-200 shadow-sm transition-all hover:shadow-xl hover:shadow-stone-200/50">
-           <div className="flex items-center justify-between mb-6">
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
-              <ArrowDownRight className="w-6 h-6 text-green-600" />
+        <div className="bg-white rounded-[28px] p-6 border border-stone-200 shadow-sm transition-all hover:shadow-xl hover:shadow-stone-200/50">
+           <div className="flex items-center justify-between mb-5">
+            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+              <ArrowDownRight className="w-5 h-5 text-green-600" />
             </div>
-            <span className="text-[0.6rem] font-black text-stone-400 uppercase tracking-widest">Total Payouts</span>
+            <span className="text-[0.55rem] font-black text-stone-400 uppercase tracking-widest">Total Payouts</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tighter text-stone-950 mb-1">842.15M <span className="text-stone-400 text-xs text-stone-200 italic">VND</span></h2>
-          <p className="text-stone-400 text-xs font-medium">To 124 active merchant partners</p>
+          <h2 className="text-2xl font-black tracking-tighter text-stone-950 mb-1">{summary.totalPayouts.toLocaleString()} <span className="text-stone-300 text-[10px] italic uppercase font-bold">VND</span></h2>
+          <p className="text-stone-400 text-[10px] font-medium">To merchant partners</p>
         </div>
 
-        <div className="bg-white rounded-[32px] p-8 border border-stone-200 shadow-sm transition-all hover:shadow-xl hover:shadow-stone-200/50">
-           <div className="flex items-center justify-between mb-6">
-            <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
-              <ArrowUpRight className="w-6 h-6 text-orange-600" />
+        <div className="bg-white rounded-[28px] p-6 border border-stone-200 shadow-sm transition-all hover:shadow-xl hover:shadow-stone-200/50">
+           <div className="flex items-center justify-between mb-5">
+            <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+              <ArrowUpRight className="w-5 h-5 text-orange-600" />
             </div>
-            <span className="text-[0.6rem] font-black text-stone-400 uppercase tracking-widest">Collected Fees</span>
+            <span className="text-[0.55rem] font-black text-stone-400 uppercase tracking-widest">Collected Fees</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tighter text-stone-950 mb-1">398.35M <span className="text-stone-400 text-xs text-stone-200 italic">VND</span></h2>
-          <p className="text-stone-400 text-xs font-medium">Commission & Platform subscriptions</p>
+          <h2 className="text-2xl font-black tracking-tighter text-stone-950 mb-1">{summary.collectedFees.toLocaleString()} <span className="text-stone-300 text-[10px] italic uppercase font-bold">VND</span></h2>
+          <p className="text-stone-400 text-[10px] font-medium">Commission & Platform Subs</p>
         </div>
       </div>
 
       {/* Main Content: Transaction History */}
-      <div className="bg-white rounded-[40px] border border-stone-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-[40px] border border-stone-200 overflow-hidden shadow-sm min-h-[500px] flex flex-col">
         <header className="px-8 py-6 border-b border-stone-100 flex items-center justify-between bg-stone-50/30">
           <div>
             <h3 className="text-lg font-black text-stone-950">Transaction History</h3>
@@ -77,12 +103,21 @@ const MerchantPaymentsView: React.FC = () => {
           </div>
         </header>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto flex-1 relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+                <p className="text-[0.6rem] font-black uppercase tracking-widest text-stone-400">Fetching history...</p>
+              </div>
+            </div>
+          )}
+          
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-stone-50">
                 <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Transaction ID</th>
-                <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Target Merchant</th>
+                <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Target</th>
                 <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Type</th>
                 <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Amount</th>
                 <th className="px-8 py-4 text-[0.65rem] font-black uppercase text-stone-400 tracking-widest">Date / Time</th>
@@ -91,21 +126,22 @@ const MerchantPaymentsView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {mockTransactions.map((tx) => (
-                <tr key={tx.id} className="border-b border-stone-50 hover:bg-stone-50/50 transition-colors group">
+              {transactions.length > 0 ? transactions.map((tx, idx) => (
+                <tr key={tx.id || idx} className="border-b border-stone-50 hover:bg-stone-50/50 transition-colors group">
                   <td className="px-8 py-5">
-                    <span className="text-xs font-bold text-stone-400 font-mono tracking-tighter">{tx.id}</span>
+                    <span className="text-xs font-bold text-stone-400 font-mono tracking-tighter">{tx.id || 'N/A'}</span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-xs">🏦</div>
-                      <span className="text-sm font-bold text-stone-950">{tx.merchant}</span>
+                      <span className="text-sm font-bold text-stone-950">{tx.merchantName || tx.merchant || tx.userName || 'System'}</span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
                     <span className={`text-[0.6rem] font-black px-2 py-1 rounded-md border ${
                       tx.type === 'COMMISSION' ? 'bg-blue-50 text-blue-600 border-blue-100' :
                       tx.type === 'PLATFORM_FEE' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                      tx.type === 'TOP_UP' ? 'bg-green-50 text-green-600 border-green-100' :
                       'bg-orange-50 text-orange-600 border-orange-100'
                     }`}>
                       {tx.type}
@@ -117,12 +153,14 @@ const MerchantPaymentsView: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-xs font-medium text-stone-500 uppercase">{new Date(tx.date).toLocaleDateString()}</span>
+                    <span className="text-xs font-medium text-stone-500 uppercase">
+                      {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'N/A'}
+                    </span>
                   </td>
                   <td className="px-8 py-5">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.6rem] font-black tracking-widest border ${
-                      tx.status === 'COMPLETED' ? 'bg-green-50 text-green-600 border-green-100' :
-                      tx.status === 'PENDING' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                      tx.status === 'COMPLETED' || tx.status === 'SUCCESS' ? 'bg-green-50 text-green-600 border-green-100' :
+                      tx.status === 'PENDING' || tx.status === 'IN_PROGRESS' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                       'bg-red-50 text-red-600 border-red-100'
                     }`}>
                       {tx.status}
@@ -134,7 +172,13 @@ const MerchantPaymentsView: React.FC = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : !isLoading && (
+                <tr>
+                  <td colSpan={7} className="px-8 py-20 text-center">
+                    <p className="text-xs font-black uppercase tracking-widest text-stone-300">No transactions recorded yet</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

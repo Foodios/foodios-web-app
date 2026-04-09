@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, Plus, MoreHorizontal, Star, Loader2, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Search, Plus, MoreHorizontal, Star, Loader2, AlertCircle, Pencil, Trash2, Eye } from "lucide-react";
 import AddMerchantModal from "../modals/AddMerchantModal";
 import MerchantApplicationsView from "./MerchantApplicationsView";
 import MerchantPaymentsView from "./MerchantPaymentsView";
@@ -8,6 +8,7 @@ import { adminService } from "../../../services/adminService";
 
 function MerchantsView() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const activeTab = searchParams.get('tab') || 'active-shops';
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,12 +22,7 @@ function MerchantsView() {
     setIsLoading(true);
     setError(null);
     try {
-      let result;
-      if (searchQuery.trim()) {
-        result = await adminService.searchMerchants(searchQuery);
-      } else {
-        result = await adminService.getMerchants();
-      }
+      const result = await adminService.getMerchants(1, 20, searchQuery);
       
       const rawData = result.data || result;
       const finalData = Array.isArray(rawData) ? rawData : (rawData.items || rawData.content || []);
@@ -63,6 +59,10 @@ function MerchantsView() {
   const openEditModal = (merchant: any) => {
     setEditingMerchant(merchant);
     setIsModalOpen(true);
+  };
+
+  const handleViewDetail = (id: string) => {
+    navigate(`/admin/merchants/${id}`);
   };
 
   if (activeTab === 'applications') {
@@ -147,7 +147,7 @@ function MerchantsView() {
                 </tr>
               ) : (
                 merchantsList.map((merchant) => (
-                  <tr key={merchant.id} className="hover:bg-stone-50/50 transition-colors group">
+                  <tr key={merchant.id} className="hover:bg-stone-50/50 transition-colors group cursor-pointer" onClick={() => handleViewDetail(merchant.id)}>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded-2xl bg-stone-100 flex items-center justify-center text-xl overflow-hidden shadow-sm border border-stone-200/50 group-hover:scale-110 transition-transform">
@@ -158,7 +158,7 @@ function MerchantsView() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-stone-950">{merchant.displayName || merchant.name}</h4>
+                          <h4 className="text-sm font-bold text-stone-950 group-hover:text-stone-900 group-hover:underline">{merchant.displayName || merchant.name}</h4>
                           <div className="flex items-center gap-1.5 mt-1">
                             <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
                             <span className="text-[0.7rem] font-bold text-stone-600">{merchant.rating || "N/A"}</span>
@@ -193,7 +193,14 @@ function MerchantsView() {
                       </div>
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          onClick={() => handleViewDetail(merchant.id)}
+                          className="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-stone-50 text-stone-400 hover:bg-stone-950 hover:text-white transition-all shadow-sm border border-stone-100 hover:border-stone-950 active:scale-90"
+                          title="View Profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button 
                           onClick={() => openEditModal(merchant)}
                           className="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-stone-50 text-stone-400 hover:bg-stone-950 hover:text-white transition-all shadow-sm border border-stone-100 hover:border-stone-950 active:scale-90"

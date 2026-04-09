@@ -21,7 +21,8 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
     openingHours: '09:00 - 22:00',
     status: 'Active',
     description: '',
-    logoUrl: ''
+    logoUrl: '',
+    commissionRate: 15.0
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +40,8 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
         openingHours: editingMerchant.openingHours || '09:00 - 22:00',
         status: editingMerchant.status || 'Active',
         description: editingMerchant.description || '',
-        logoUrl: editingMerchant.logoUrl || ''
+        logoUrl: editingMerchant.logoUrl || '',
+        commissionRate: editingMerchant.commissionRate || 15.0
       });
     } else {
       setFormData({
@@ -53,7 +55,8 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
         openingHours: '09:00 - 22:00',
         status: 'Active',
         description: '',
-        logoUrl: ''
+        logoUrl: '',
+        commissionRate: 15.0
       });
     }
   }, [editingMerchant, isOpen]);
@@ -218,6 +221,21 @@ const AddMerchantModal: React.FC<AddMerchantModalProps> = ({ isOpen, onClose, on
                   <option value="Busy">Busy</option>
                   <option value="Inactive">Inactive</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-[0.7rem] font-black text-stone-400 uppercase tracking-widest block mb-2 px-1">Commission Rate (%)</label>
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={formData.commissionRate}
+                    onChange={(e) => setFormData({...formData, commissionRate: parseFloat(e.target.value)})}
+                    placeholder="15.00"
+                    className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-5 py-3.5 text-sm font-medium text-stone-950 placeholder:text-stone-300 focus:bg-white focus:ring-4 focus:ring-stone-950/5 focus:border-stone-300 transition-all outline-none"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 font-bold text-sm">%</div>
+                </div>
               </div>
 
               <div>

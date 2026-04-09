@@ -11,8 +11,10 @@ import { useAuth } from "../context/AuthContext";
 function PickItUp() {
   const { user } = useAuth();
   const [merchants, setMerchants] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,12 +48,36 @@ function PickItUp() {
     fetchData();
   }, [fetchData]);
 
-  const filteredMerchants = merchants.filter(m => {
-    const matchesSearch = m.merchantName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         m.cuisineCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSaved = showSavedOnly ? savedIds.has(m.merchantId) : true;
-    return matchesSearch && matchesSaved;
-  });
+  // Global Search Logic
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setProducts([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const result = await publicService.globalSearch(searchQuery);
+        console.log("Elasticsearch Search Result:", result);
+        
+        const searchData = result.data || result;
+        // Linh hoạt nhận diện cả 'merchants' hoặc 'stores'
+        setMerchants(searchData.merchants || searchData.stores || []);
+        setProducts(searchData.products || []);
+      } catch (err) {
+        console.error("Global search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredMerchants = showSavedOnly 
+    ? merchants.filter(m => savedIds.has(m.merchantId || m.id))
+    : merchants;
 
   const toggleFavorite = async (e: React.MouseEvent, merchantId: string) => {
     e.preventDefault();
@@ -120,72 +146,115 @@ function PickItUp() {
         </div>
 
         {/* Loading State */}
-        {isLoading ? (
+        {isLoading || isSearching ? (
           <div className="flex flex-col items-center justify-center py-40">
             <Loader2 className="w-12 h-12 text-stone-200 animate-spin mb-4" />
-            <p className="text-[0.6rem] font-black text-stone-400 uppercase tracking-widest">Finding available merchants...</p>
+            <p className="text-[0.6rem] font-black text-stone-400 uppercase tracking-widest">
+              {isSearching ? "Searching system-wide..." : "Finding available merchants..."}
+            </p>
           </div>
         ) : (
-          /* Restaurant Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             {filteredMerchants.length > 0 ? filteredMerchants.map((restaurant) => (
-               <Link 
-                 key={restaurant.merchantId} 
-                 to={`/restaurant/${restaurant.merchantSlug}`}
-                 className="group flex flex-col bg-white rounded-[40px] border border-stone-100 overflow-hidden hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-500"
-               >
-                  <div className="h-64 w-full relative overflow-hidden">
-                     <img 
-                       src={restaurant.logoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800"} 
-                       alt={restaurant.merchantName} 
-                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                     />
-                     
-                     {/* Favorite Button */}
-                     <button
-                        onClick={(e) => toggleFavorite(e, restaurant.merchantId)}
-                        className={`absolute top-5 left-5 h-10 w-10 flex items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 shadow-sm border ${
-                            savedIds.has(restaurant.merchantId) 
-                            ? "bg-orange-500 text-white border-orange-400" 
-                            : "bg-white/90 text-stone-400 border-white hover:text-orange-500"
-                        }`}
-                     >
-                        <Heart className={`w-5 h-5 ${savedIds.has(restaurant.merchantId) ? "fill-current" : ""}`} />
-                     </button>
+          <div className="space-y-16">
+            {/* Merchants Section */}
+            {filteredMerchants.length > 0 && (
+              <section>
+                 <div className="flex items-center gap-3 mb-8">
+                    <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
+                    <h2 className="text-xl font-black text-stone-950 uppercase tracking-tight italic">Restaurants</h2>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredMerchants.map((restaurant) => (
+                      <Link 
+                        key={restaurant.merchantId || restaurant.id} 
+                        to={`/restaurant/${restaurant.merchantSlug}`}
+                        className="group flex flex-col bg-white rounded-[40px] border border-stone-100 overflow-hidden hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-500"
+                      >
+                         <div className="h-64 w-full relative overflow-hidden">
+                            <img 
+                              src={restaurant.logoUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800"} 
+                              alt={restaurant.merchantName} 
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                            />
+                            
+                            <button
+                               onClick={(e) => toggleFavorite(e, restaurant.merchantId || restaurant.id)}
+                               className={`absolute top-5 left-5 h-10 w-10 flex items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 shadow-sm border ${
+                                   savedIds.has(restaurant.merchantId || restaurant.id) 
+                                   ? "bg-orange-500 text-white border-orange-400" 
+                                   : "bg-white/90 text-stone-400 border-white hover:text-orange-500"
+                               }`}
+                            >
+                               <Heart className={`w-5 h-5 ${savedIds.has(restaurant.merchantId || restaurant.id) ? "fill-current" : ""}`} />
+                            </button>
+       
+                            <div className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full shadow-sm">
+                               <Star className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+                               <span className="text-sm font-black text-stone-900">{restaurant.overallReview?.averageRating || "4.5"}</span>
+                            </div>
+                         </div>
+                         
+                         <div className="p-8">
+                            <h3 className="text-xl font-black text-stone-950 tracking-tight group-hover:text-orange-600 transition-colors uppercase italic mb-1 truncate">{restaurant.merchantName}</h3>
+                            <p className="text-sm font-bold text-stone-400 mb-6 uppercase tracking-widest">{restaurant.cuisineCategory || "Premium Cuisine"}</p>
+                            
+                            <div className="flex items-center justify-between pt-6 border-t border-stone-50">
+                               <div className="flex items-center gap-2">
+                                  <MapPin className="w-4 h-4 text-orange-500" />
+                                  <span className="text-sm font-black text-stone-600 uppercase tracking-widest">{restaurant.distance || "Near you"}</span>
+                               </div>
+                               <div className="flex items-center gap-2 text-stone-400 group-hover:text-stone-950 transition-colors">
+                                  <span className="text-xs font-black uppercase tracking-widest">Menu</span>
+                                  <Clock className="w-4 h-4" />
+                               </div>
+                            </div>
+                         </div>
+                      </Link>
+                    ))}
+                 </div>
+              </section>
+            )}
 
-                     <div className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full shadow-sm">
-                        <Star className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
-                        <span className="text-sm font-black text-stone-900">{restaurant.overallReview?.averageRating || "4.5"}</span>
-                        <span className="text-[0.65rem] font-bold text-stone-400">({restaurant.overallReview?.totalReviews || "0"})</span>
-                     </div>
-                     <div className="absolute bottom-5 left-5 px-3 py-1.5 bg-stone-950/80 backdrop-blur-md rounded-xl">
-                        <span className="text-xs font-black text-white uppercase tracking-widest">{restaurant.activeStoreCount} STORES OPEN</span>
-                     </div>
-                  </div>
-                  
-                  <div className="p-8">
-                     <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-black text-stone-950 tracking-tight group-hover:text-orange-600 transition-colors uppercase">{restaurant.merchantName}</h3>
-                     </div>
-                     <p className="text-sm font-bold text-stone-400 mb-6">{restaurant.cuisineCategory || "Premium Cuisines"}</p>
-                     
-                     <div className="flex items-center justify-between pt-6 border-t border-stone-50">
-                        <div className="flex items-center gap-2">
-                           <MapPin className="w-4 h-4 text-orange-500" />
-                           <span className="text-sm font-black text-stone-600">{restaurant.distance || "Near you"}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-stone-400 font-bold group-hover:text-stone-950 transition-colors">
-                           <span className="text-xs uppercase tracking-widest">View Menu</span>
-                           <Clock className="w-4 h-4" />
-                        </div>
-                     </div>
-                  </div>
-               </Link>
-             )) : (
-              <div className="col-span-full py-40 text-center">
-                <p className="text-stone-400 font-bold italic">No merchants available at the moment.</p>
+            {/* Products Section (Elasticsearch Results) */}
+            {products.length > 0 && (
+              <section>
+                 <div className="flex items-center gap-3 mb-8">
+                    <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                    <h2 className="text-xl font-black text-stone-950 uppercase tracking-tight italic">Dishes & Products</h2>
+                 </div>
+                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {products.map((product) => (
+                      <Link 
+                        key={product.id} 
+                        to={`/restaurant/${product.merchantSlug}`} 
+                        className="group bg-white p-4 rounded-[32px] border border-stone-100 hover:shadow-xl transition-all"
+                      >
+                         <div className="aspect-square w-full rounded-2xl overflow-hidden mb-4">
+                            <img 
+                              src={product.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400"} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                            />
+                         </div>
+                         <h4 className="text-[0.85rem] font-black text-stone-950 uppercase italic leading-tight truncate">{product.name}</h4>
+                         <p className="text-[0.65rem] font-bold text-stone-400 mt-1 uppercase tracking-widest truncate">{product.merchantName}</p>
+                         <div className="mt-3 text-orange-600 font-black text-sm">
+                            {product.price.toLocaleString()}đ
+                         </div>
+                      </Link>
+                    ))}
+                 </div>
+              </section>
+            )}
+
+            {filteredMerchants.length === 0 && products.length === 0 && (
+              <div className="py-40 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                   <Search className="w-10 h-10 text-stone-200" />
+                </div>
+                <h3 className="text-2xl font-black text-stone-950 uppercase italic tracking-tight">No results found</h3>
+                <p className="text-stone-400 font-bold uppercase tracking-[0.2em] mt-3">Try adjusting your search or explore other cuisines.</p>
               </div>
-             )}
+            )}
           </div>
         )}
       </main>

@@ -63,5 +63,20 @@ export const publicService = {
 
     if (!response.ok) throw new Error("Search request failed");
     return response.json();
+  },
+
+  // GET: Global Search (Elasticsearch)
+  globalSearch: async (query: string) => {
+    const response = await fetch(`http://localhost:8080/api/v1/search/global?query=${encodeURIComponent(query)}`, {
+      method: "GET",
+      headers: {
+        "accept": "*/*",
+        ...getAuthHeader(),
+        ...getEnvelopeHeaders()
+      }
+    });
+
+    if (!response.ok) throw new Error("Global search failed");
+    return response.json();
   }
 };

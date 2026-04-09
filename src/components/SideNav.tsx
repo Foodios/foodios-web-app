@@ -1,4 +1,4 @@
-import { X, FileText, Wallet, LifeBuoy, Tag, Gift, LogOut, Apple, Smartphone, UserCircle, ShieldCheck, Store } from "lucide-react";
+import { X, FileText, Wallet, LogOut, Apple, Smartphone, UserCircle, ShieldCheck, Store } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo-transparent-logo.png";
 import { useAuth } from "../context/AuthContext";
@@ -16,9 +16,6 @@ const businessLinks = [
 const userNavLinks = [
   { name: "Orders", icon: FileText, path: "/profile?view=orders" },
   { name: "Wallet", icon: Wallet, path: "/profile?view=wallet" },
-  { name: "Help", icon: LifeBuoy, path: "/profile?view=help" },
-  { name: "Promotions", icon: Tag, path: "/profile?view=promotions" },
-  { name: "Invite friends", icon: Gift, path: "/profile?view=invite" },
 ];
 
 function SideNav({ isOpen, onClose }: SideNavProps) {

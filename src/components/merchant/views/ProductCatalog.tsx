@@ -15,6 +15,7 @@ function ProductCatalog() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filters State
   const [stores, setStores] = useState<any[]>([]);
@@ -85,7 +86,8 @@ function ProductCatalog() {
       const result = await productService.getProducts(
         selectedStoreId, 
         selectedCategoryId === 'all' ? undefined : selectedCategoryId,
-        activeStatus === 'ALL' ? undefined : activeStatus
+        activeStatus === 'ALL' ? undefined : activeStatus,
+        searchQuery
       );
       
       let productList = [];
@@ -104,7 +106,7 @@ function ProductCatalog() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedStoreId, selectedCategoryId, activeStatus]);
+  }, [selectedStoreId, selectedCategoryId, activeStatus, searchQuery]);
 
   useEffect(() => {
     fetchProducts();
@@ -187,7 +189,12 @@ function ProductCatalog() {
         <div className="flex items-center gap-3 pr-2">
             <div className="relative group flex-1 lg:flex-none">
                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 group-focus-within:text-stone-950 transition-colors" />
-               <input className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-[0.75rem] font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-full lg:w-64" placeholder="Scan or search products..." />
+               <input 
+                 className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-[0.75rem] font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-full lg:w-64" 
+                 placeholder="Scan or search products..." 
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+               />
             </div>
             <button className="h-11 w-11 bg-stone-50 border border-stone-100 rounded-2xl flex items-center justify-center hover:bg-stone-50 transition shadow-sm text-stone-400 hover:text-stone-950">
                <Filter className="w-4 h-4" />
