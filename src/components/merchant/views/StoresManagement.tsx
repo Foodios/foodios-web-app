@@ -25,7 +25,10 @@ function StoresManagement() {
 
   const fetchStores = useCallback(async () => {
     const merchantId = merchant?.id || merchant?.merchantId;
-    if (!merchantId) return;
+    if (!merchantId) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {

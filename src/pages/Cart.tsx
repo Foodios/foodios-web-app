@@ -2,6 +2,7 @@ import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag, CreditCard, ChevronRight, 
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import SideNav from "../components/SideNav";
 import { useState, useEffect } from "react";
 import { cartService } from "../services/cartService";
 
@@ -11,6 +12,7 @@ function Cart() {
   const [error, setError] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [isSideNavOpen, setIsSideNavOpen] = useState(false);
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -101,7 +103,8 @@ function Cart() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans overflow-x-hidden">
-      <Header isHeroActive={false} onMenuClick={() => {}} />
+      <Header isHeroActive={false} onMenuClick={() => setIsSideNavOpen(true)} />
+      <SideNav isOpen={isSideNavOpen} onClose={() => setIsSideNavOpen(false)} />
       
       <main className="flex-1 w-full max-w-[1020px] mx-auto px-6 py-20">
         {/* Navigation */}

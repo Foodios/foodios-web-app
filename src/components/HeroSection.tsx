@@ -39,15 +39,22 @@ function HeroSection({ active }: HeroSectionProps) {
       setIsSearching(true);
       setShowResults(true);
       try {
-        console.log("Searching for:", searchQuery);
-        const response = await publicService.searchMerchants(searchQuery);
+        console.log("Global searching for:", searchQuery);
+        const response = await publicService.globalSearch(searchQuery);
         console.log("Search response:", response);
         
         // Handle standard response structure with .data.items
+        // Handle standard response structure or new global search structure
         const rawData = response.data || response;
-        const finalResults = Array.isArray(rawData) 
-          ? rawData 
-          : (rawData.items || rawData.content || rawData.merchants || rawData.data || []);
+        let finalResults = [];
+        
+        if (rawData.stores || rawData.products) {
+          finalResults = [...(rawData.stores || []), ...(rawData.products || [])];
+        } else {
+          finalResults = Array.isArray(rawData) 
+            ? rawData 
+            : (rawData.items || rawData.content || rawData.merchants || rawData.data || []);
+        }
           
         setResults(finalResults);
       } catch (error) {

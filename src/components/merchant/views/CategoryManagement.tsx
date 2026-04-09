@@ -21,7 +21,11 @@ function CategoryManagement() {
   useEffect(() => {
     const fetchStores = async () => {
       const merchantId = merchant?.id || merchant?.merchantId;
-      if (!merchantId) return;
+      if (!merchantId) {
+        setIsStoresLoading(false);
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const result = await storeService.getStores(merchantId);
@@ -42,7 +46,10 @@ function CategoryManagement() {
 
   // Fetch categories when selectedStoreId changes
   const fetchCategories = useCallback(async () => {
-    if (!selectedStoreId) return;
+    if (!selectedStoreId) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -148,13 +155,22 @@ function CategoryManagement() {
              <Loader2 className="w-10 h-10 text-stone-100 animate-spin mb-4" />
              <p className="text-[0.6rem] font-black text-stone-300 uppercase tracking-widest">Loading categories...</p>
            </div>
-         ) : categories.length === 0 ? (
-           <div className="py-20 text-center flex flex-col items-center">
+         ) : (categories.length === 0 || !selectedStoreId) ? (
+           <div className="py-20 text-center flex flex-col items-center px-6">
              <div className="w-16 h-16 bg-stone-50 rounded-3xl flex items-center justify-center mb-6">
                 <UtensilsCrossed className="w-8 h-8 text-stone-100" />
              </div>
-             <p className="text-stone-400 font-bold italic text-sm">No categories found for this branch.</p>
-             <button onClick={openAddModal} className="mt-6 h-11 px-6 bg-stone-50 hover:bg-stone-950 hover:text-white rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all">Create First Category</button>
+             <p className="text-stone-400 font-bold italic text-sm">
+               {!selectedStoreId 
+                 ? "You need to select or create a branch before managing categories." 
+                 : "No categories found for this branch."}
+             </p>
+             <button 
+               onClick={!selectedStoreId ? () => navigate('/merchant/stores/management') : openAddModal} 
+               className="mt-6 h-11 px-8 bg-stone-50 hover:bg-stone-950 hover:text-white rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all shadow-sm"
+             >
+               {!selectedStoreId ? "Go to Stores Management" : "Create First Category"}
+             </button>
            </div>
          ) : (
            <table className="w-full text-left border-collapse">

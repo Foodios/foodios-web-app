@@ -350,7 +350,7 @@ const Profile: React.FC = () => {
                           <div className="absolute -top-6 -right-6 p-8 opacity-[0.03] pointer-events-none">
                              <User className="w-40 h-40" />
                           </div>
-                          
+
                           <div className="relative z-10">
                              <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-3">
@@ -404,7 +404,7 @@ const Profile: React.FC = () => {
                              </div>
                              <button onClick={() => setActiveView('favorites')} className="text-orange-600 font-black text-[0.55rem] uppercase tracking-widest hover:underline">Manage All ({favoriteRestaurants.length})</button>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                              {isLoadingFavs ? (
                                 <div className="col-span-full py-10 flex flex-col items-center justify-center gap-2">
@@ -413,9 +413,9 @@ const Profile: React.FC = () => {
                                 </div>
                              ) : favoriteRestaurants.length > 0 ? (
                                 favoriteRestaurants.slice(0, 3).map((res) => (
-                                   <RestaurantCard 
-                                      key={res.merchantId || res.id} 
-                                      restaurant={res} 
+                                   <RestaurantCard
+                                      key={res.merchantId || res.id}
+                                      restaurant={res}
                                       onToggleFavorite={handleToggleFavorite}
                                       isFavorite={true}
                                    />
@@ -455,9 +455,9 @@ const Profile: React.FC = () => {
                       {favoriteRestaurants.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                            {favoriteRestaurants.map((res) => (
-                              <RestaurantCard 
-                                 key={res.merchantId || res.id} 
-                                 restaurant={res} 
+                              <RestaurantCard
+                                 key={res.merchantId || res.id}
+                                 restaurant={res}
                                  onToggleFavorite={handleToggleFavorite}
                                  isFavorite={true}
                               />

@@ -42,7 +42,7 @@ export const cartService = {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.result?.description || "Failed to add item to cart");
     }
-    
+
     return response.json();
   },
 
@@ -60,14 +60,14 @@ export const cartService = {
     if (!response.ok) {
       throw new Error("Failed to fetch cart details");
     }
-    
+
     return response.json();
   },
 
   // POST: Create order from cart
   checkout: async (data: any) => {
     const metadata = generateApiMetadata("ONL");
-    const response = await fetch(`http://localhost:8080/api/v1/orders/place`, {
+    const response = await fetch(`http://localhost:8080/api/v1/my-orders/place`, {
       method: "POST",
       headers: {
         "accept": "*/*",
@@ -84,7 +84,7 @@ export const cartService = {
     if (!response.ok) {
       throw new Error("Failed to place order");
     }
-    
+
     return response.json();
   },
 
@@ -102,7 +102,7 @@ export const cartService = {
     if (!response.ok) {
       throw new Error("Invalid promo code");
     }
-    
+
     return response.json();
   },
 
@@ -120,7 +120,7 @@ export const cartService = {
     if (!response.ok) {
       throw new Error("Failed to fetch order details");
     }
-    
+
     return response.json();
   },
 
@@ -138,7 +138,7 @@ export const cartService = {
     if (!response.ok) {
       throw new Error("Failed to fetch order history");
     }
-    
+
     return response.json();
   }
 };

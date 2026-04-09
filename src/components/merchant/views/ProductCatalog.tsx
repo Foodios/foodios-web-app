@@ -9,7 +9,7 @@ import { categoryService } from "../../../services/categoryService";
 function ProductCatalog() {
   const { merchant } = useOutletContext<{ merchant: any }>();
   const [searchParams] = useSearchParams();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
@@ -35,13 +35,15 @@ function ProductCatalog() {
   useEffect(() => {
     const initFilters = async () => {
       const merchantId = merchant?.id || merchant?.merchantId;
-      if (!merchantId) return;
-
+      if (!merchantId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const storeResult = await storeService.getStores(merchantId);
         const storeList = storeResult.data?.stores || [];
         setStores(storeList);
-        
+
         if (storeList.length > 0 && !selectedStoreId) {
           setSelectedStoreId(storeList[0].id);
         }
@@ -55,10 +57,13 @@ function ProductCatalog() {
   // Fetch Categories whenever selectedStoreId changes
   useEffect(() => {
     const fetchCats = async () => {
-      if (!selectedStoreId) return;
+      if (!selectedStoreId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const catResult = await categoryService.getCategories(selectedStoreId);
-        
+
         let catList = [];
         if (Array.isArray(catResult.data)) {
           catList = catResult.data;
@@ -67,9 +72,9 @@ function ProductCatalog() {
         } else if (Array.isArray(catResult)) {
           catList = catResult;
         }
-        
+
         setCategories(catList);
-        setSelectedCategoryId("all"); 
+        setSelectedCategoryId("all");
       } catch (err) {
         console.error("Fetch categories error:", err);
       }
@@ -78,18 +83,21 @@ function ProductCatalog() {
   }, [selectedStoreId]);
 
   const fetchProducts = useCallback(async () => {
-    if (!selectedStoreId) return;
-    
+    if (!selectedStoreId) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
       const result = await productService.getProducts(
-        selectedStoreId, 
+        selectedStoreId,
         selectedCategoryId === 'all' ? undefined : selectedCategoryId,
         activeStatus === 'ALL' ? undefined : activeStatus,
         searchQuery
       );
-      
+
       let productList = [];
       if (Array.isArray(result.data)) {
         productList = result.data;
@@ -98,7 +106,7 @@ function ProductCatalog() {
       } else if (Array.isArray(result)) {
         productList = result;
       }
-      
+
       setProducts(productList);
     } catch (err) {
       console.error("Failed to fetch products", err);
@@ -144,7 +152,7 @@ function ProductCatalog() {
 
         <div className="flex items-center gap-3">
             <div className="relative group">
-               <select 
+               <select
                   value={selectedStoreId}
                   onChange={(e) => setSelectedStoreId(e.target.value)}
                   className="h-12 pl-10 pr-6 rounded-2xl border border-stone-100 bg-white text-[0.65rem] font-black uppercase tracking-widest appearance-none cursor-pointer focus:ring-4 focus:ring-orange-500/5 transition-all shadow-sm min-w-[180px]"
@@ -155,7 +163,7 @@ function ProductCatalog() {
             </div>
 
             <div className="relative group">
-               <select 
+               <select
                   value={selectedCategoryId}
                   onChange={(e) => setSelectedCategoryId(e.target.value)}
                   className="h-12 pl-10 pr-6 rounded-2xl border border-stone-100 bg-white text-[0.65rem] font-black uppercase tracking-widest appearance-none cursor-pointer focus:ring-4 focus:ring-orange-500/5 transition-all shadow-sm min-w-[150px]"
@@ -176,8 +184,8 @@ function ProductCatalog() {
                 key={s.value}
                 onClick={() => setActiveStatus(s.value)}
                 className={`px-8 py-2.5 rounded-[18px] text-[0.7rem] font-black uppercase tracking-widest transition-all ${
-                  activeStatus === s.value 
-                    ? "bg-white text-stone-950 shadow-sm" 
+                  activeStatus === s.value
+                    ? "bg-white text-stone-950 shadow-sm"
                     : "text-stone-400 hover:text-stone-600"
                 }`}
               >
@@ -189,9 +197,9 @@ function ProductCatalog() {
         <div className="flex items-center gap-3 pr-2">
             <div className="relative group flex-1 lg:flex-none">
                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 group-focus-within:text-stone-950 transition-colors" />
-               <input 
-                 className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-[0.75rem] font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-full lg:w-64" 
-                 placeholder="Scan or search products..." 
+               <input
+                 className="h-11 pl-11 pr-5 bg-stone-50 border border-stone-100 rounded-2xl text-[0.75rem] font-bold outline-none focus:ring-4 focus:ring-orange-500/5 transition-all w-full lg:w-64"
+                 placeholder="Scan or search products..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                />
@@ -199,7 +207,7 @@ function ProductCatalog() {
             <button className="h-11 w-11 bg-stone-50 border border-stone-100 rounded-2xl flex items-center justify-center hover:bg-stone-50 transition shadow-sm text-stone-400 hover:text-stone-950">
                <Filter className="w-4 h-4" />
             </button>
-            <button 
+            <button
                 onClick={openAddModal}
                 disabled={!selectedStoreId}
                 className="h-11 bg-stone-950 text-white rounded-2xl px-6 text-[0.65rem] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-stone-200 hover:bg-orange-600 transition-all active:scale-95 disabled:opacity-50"
@@ -221,13 +229,26 @@ function ProductCatalog() {
              <p className="text-red-500 font-bold">{error}</p>
              <button onClick={fetchProducts} className="mt-4 text-sm font-black text-stone-950 underline underline-offset-4">Reload Catalog</button>
           </div>
-        ) : products.length === 0 ? (
-          <div className="py-24 text-center flex flex-col items-center">
+        ) : (products.length === 0 || !selectedStoreId) ? (
+          <div className="py-24 text-center flex flex-col items-center px-6">
              <div className="w-20 h-20 bg-stone-50 rounded-[32px] flex items-center justify-center mb-6">
                 <LayoutGrid className="w-8 h-8 text-stone-100" />
              </div>
-             <p className="text-stone-400 font-bold italic mb-6 text-sm">No products found matching these filters.</p>
-             <button onClick={openAddModal} className="h-11 px-8 bg-stone-50 text-stone-950 rounded-xl text-[0.6rem] font-black uppercase tracking-widest hover:bg-stone-950 hover:text-white transition-all">Create Product</button>
+             <p className="text-stone-400 font-bold italic mb-6 text-sm">
+                {!selectedStoreId 
+                  ? "You need to select or create a branch before managing your products." 
+                  : "No products found matching these filters."}
+             </p>
+             <button 
+               onClick={!selectedStoreId ? () => {} : openAddModal} 
+               className={`h-11 px-8 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+                 !selectedStoreId 
+                   ? "bg-stone-50 text-stone-300 cursor-not-allowed border border-stone-100" 
+                   : "bg-stone-50 text-stone-950 hover:bg-stone-950 hover:text-white"
+               }`}
+             >
+               {!selectedStoreId ? "Account Requires Branch" : "Create Product"}
+             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -290,13 +311,13 @@ function ProductCatalog() {
                              <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-stone-50 border border-stone-100 text-stone-400 hover:bg-stone-950 hover:text-white transition-all shadow-sm">
                                 <Eye className="w-4 h-4" />
                              </button>
-                             <button 
+                             <button
                                onClick={() => openEditModal(product)}
                                className="h-10 w-10 flex items-center justify-center rounded-xl bg-stone-50 border border-stone-100 text-stone-400 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
                              >
                                 <Edit2 className="w-4 h-4" />
                              </button>
-                             <button 
+                             <button
                                onClick={() => handleDelete(product.id)}
                                className="h-10 w-10 flex items-center justify-center rounded-xl bg-stone-50 border border-stone-100 text-red-300 hover:bg-red-500 hover:text-white transition-all shadow-sm"
                              >
@@ -315,9 +336,9 @@ function ProductCatalog() {
         )}
       </div>
 
-      <ProductForm 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <ProductForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         initialData={editingProduct}
         onSuccess={fetchProducts}
         storeId={selectedStoreId}

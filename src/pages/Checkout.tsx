@@ -2,6 +2,7 @@ import { ArrowLeft, CreditCard, MapPin, ChevronRight, Lock, Store, Banknote, Sma
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import SideNav from "../components/SideNav";
 import { useState, useEffect } from "react";
 import { cartService } from "../services/cartService";
 
@@ -12,6 +13,7 @@ function Checkout() {
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [isSideNavOpen, setIsSideNavOpen] = useState(false);
 
   useEffect(() => {
     const fetchCartAndPromo = async () => {
@@ -111,7 +113,8 @@ function Checkout() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans overflow-x-hidden">
-      <Header isHeroActive={false} onMenuClick={() => {}} />
+      <Header isHeroActive={false} onMenuClick={() => setIsSideNavOpen(true)} />
+      <SideNav isOpen={isSideNavOpen} onClose={() => setIsSideNavOpen(false)} />
 
       <main className="flex-1 w-full max-w-[1020px] mx-auto px-6 py-20">
         {/* Progress Navigation - Compact */}

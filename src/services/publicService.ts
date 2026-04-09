@@ -65,9 +65,9 @@ export const publicService = {
     return response.json();
   },
 
-  // GET: Global Search (Elasticsearch)
+  // GET: Global Search (Database Search)
   globalSearch: async (query: string) => {
-    const response = await fetch(`http://localhost:8080/api/v1/search/global?query=${encodeURIComponent(query)}`, {
+    const response = await fetch(`http://localhost:8080/api/v1/search?q=${encodeURIComponent(query)}`, {
       method: "GET",
       headers: {
         "accept": "*/*",
