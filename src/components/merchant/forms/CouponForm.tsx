@@ -93,11 +93,18 @@ function CouponForm({ isOpen, onClose, initialData, onSuccess, merchantId }: Cou
 
     setIsSubmitting(true);
     try {
+      // Parse dates as local time to avoid timezone shifts
+      const [sYear, sMonth, sDay] = formData.startsAt.split('-').map(Number);
+      const [eYear, eMonth, eDay] = formData.endsAt.split('-').map(Number);
+      
+      const startsAt = new Date(sYear, sMonth - 1, sDay, 0, 0, 0).toISOString();
+      const endsAt = new Date(eYear, eMonth - 1, eDay, 23, 59, 59).toISOString();
+
       const payload = {
         ...formData,
         merchantId,
-        startsAt: new Date(formData.startsAt).toISOString(),
-        endsAt: new Date(formData.endsAt).toISOString()
+        startsAt,
+        endsAt
       };
 
       if (initialData?.id) {

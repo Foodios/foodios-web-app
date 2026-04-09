@@ -111,7 +111,7 @@ function StoresManagement() {
              >
                 <div className="h-36 w-full md:w-52 bg-stone-50 rounded-[28px] overflow-hidden shrink-0 relative shadow-inner">
                    <img 
-                      src={store.heroImageUrl || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80"} 
+                      src={store.logoUrl || store.heroImageUrl || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=300&q=80"} 
                       alt={store.name} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                    />

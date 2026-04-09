@@ -18,6 +18,7 @@ function StoreForm({ isOpen, onClose, onSuccess, merchantId }: StoreFormProps) {
     status: "ACTIVE",
     timeZone: "Asia/Ho_Chi_Minh",
     heroImageUrl: "",
+    logoUrl: "",
     opensAt: "08:00",
     closesAt: "22:00",
     address: {
@@ -53,7 +54,7 @@ function StoreForm({ isOpen, onClose, onSuccess, merchantId }: StoreFormProps) {
   };
 
   const setHeroImage = (url: string) => {
-    setFormData(prev => ({ ...prev, heroImageUrl: url }));
+    setFormData(prev => ({ ...prev, heroImageUrl: url, logoUrl: url }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
